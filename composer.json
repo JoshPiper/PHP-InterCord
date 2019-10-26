@@ -1,0 +1,23 @@
+{
+    "name": "internet/intercord",
+    "type": "library",
+    "description": "A library for sending payloads to discord via webhooks.",
+    "homepage": "https://doctor-internet.dev",
+    "license": "MIT",
+    "authors": [{
+        "name": "John Internet",
+        "homepage": "https://doctor-internet.dev/",
+        "email": "jonjon1234.github@gmail.com",
+        "role": "Developer"
+    }],
+    "autoload": {
+        "psr-4": {
+            "Internet\\InterCord\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=7.1",
+        "ext-json": "*",
+        "guzzlehttp/guzzle": "^6.4"
+	}
+}

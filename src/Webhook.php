@@ -1,0 +1,72 @@
+<?php
+
+namespace Internet\InterCord;
+
+use Exception;
+use GuzzleHttp\Client;
+use Psr\Http\Message\ResponseInterface;
+use Internet\InterCord\Internal\Payload;
+
+/**
+ * The discord webhook class represents a webhook endpoint, and contains functions for sending payloads to it.
+ * Class DiscordWebhook
+ * @package Internet\InterCord
+ */
+class Webhook extends Client {
+	/**
+	 * Webhook constructor.
+	 * @param string $url Either the full webhook URL or the webhook ID (assuming webhook token is not empty)
+	 * @param string $token The webhook token.
+	 */
+    public function __construct(string $url, string $token = ''){
+		parent::__construct([
+			'base_uri' => empty($token) ? $url : "https://discordapp.com/api/webhooks/{$url}/{$token}",
+			'headers' => [
+				'Content-Type' => 'application/json'
+			]
+		]);
+    }
+
+	/**
+	 * Execute a webhook with either an array of strings/embeds, a string, an embed or a payload object.
+	 * @param $content array|string|RichEmbed|Payload
+	 * @param string $username Username override to set on the payload. Only works if content isn't a payload.
+	 * @param string $avatar Avatar override to set. Only works if content isn't a payload.
+	 * @param boolean $await If the webhook should await discord's response.
+	 * @return Object|void
+	 * @throws Exception
+	 */
+    public function execute($content, string $username = '', string $avatar = '', bool $await = false): ?Object {
+    	if (!($content instanceof Payload)){
+			$payload = new Payload();
+			$payload->setUsername($username);
+			$payload->setAvatar($avatar);
+
+			if (!is_array($content)){$content = [$content];}
+			foreach ($content as $argument){
+				if (is_string($argument)){
+					$payload->setContent($argument);
+				} elseif ($argument instanceof RichEmbed){
+					$payload->addEmbed($argument);
+				}
+			}
+		}
+    	/** @var $payload Payload */
+
+    	$response = $this->post('', [
+    		'body' => json_encode($payload),
+			'query' => ['wait' => $await]
+		]);
+
+    	if (!$await){
+			if ($response->getStatusCode() == 204){
+				return null;
+			} else {
+				throw new Exception("Message failed to send.");
+			}
+		} else {
+			return json_decode($response->getBody()->getContents());
+		}
+
+	}
+}

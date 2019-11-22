@@ -50,6 +50,8 @@ class Webhook extends Client {
 					$payload->addEmbed($argument);
 				}
 			}
+		} else {
+		    $payload = $content;
 		}
     	/** @var $payload Payload */
 

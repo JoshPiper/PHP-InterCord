@@ -101,8 +101,6 @@ class Webhook extends Client {
 				} else {
 					throw $client_exception;
 				}
-
-
 			}
 		}
 	}

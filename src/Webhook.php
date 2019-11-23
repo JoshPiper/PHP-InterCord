@@ -88,16 +88,21 @@ class Webhook extends Client {
 				}
     			$delivered = true;
 			} catch (ClientException $client_exception){
-    			if ($client_exception->getCode() != 429){
-    				throw $client_exception;
+				$code = $client_exception->getCode();
+    			if ($code == 429){
+					$response = $client_exception->getResponse();
+					$left = min(array_map('intval', $response->getHeader('X-RateLimit-Remaining')));
+					if ($left == 0){
+						$time = max(array_map('intval', $response->getHeader('X-RateLimit-Reset-After')));
+						sleep($time);
+					}
+				} elseif ($code == 502){
+    				sleep(2);
+				} else {
+					throw $client_exception;
 				}
 
-				$response = $client_exception->getResponse();
-				$left = min(array_map('intval', $response->getHeader('X-RateLimit-Remaining')));
-				if ($left == 0){
-					$time = max(array_map('intval', $response->getHeader('X-RateLimit-Reset-After')));
-					sleep($time);
-				}
+
 			}
 		}
 	}

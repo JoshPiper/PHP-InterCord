@@ -6,6 +6,7 @@ use Exception;
 use GuzzleHttp\Client;
 use Psr\Http\Message\ResponseInterface;
 use Internet\InterCord\Internal\Payload;
+use GuzzleHttp\Exception\ClientException;
 
 /**
  * The discord webhook class represents a webhook endpoint, and contains functions for sending payloads to it.
@@ -70,5 +71,34 @@ class Webhook extends Client {
 			return json_decode($response->getBody()->getContents());
 		}
 
+	}
+
+	public function deliver(Payload $payload){
+    	$delivered = false;
+    	while (!$delivered){
+    		try {
+				$response = $this->post('', [
+					'body' => json_encode($payload),
+					'query' => ['wait' => true]
+				]);
+				$left = min(array_map('intval', $response->getHeader('X-RateLimit-Remaining')));
+				if ($left == 0){
+					$time = max(array_map('intval', $response->getHeader('X-RateLimit-Reset-After')));
+					sleep($time);
+				}
+    			$delivered = true;
+			} catch (ClientException $client_exception){
+    			if ($client_exception->getCode() != 429){
+    				throw $client_exception;
+				}
+
+				$response = $client_exception->getResponse();
+				$left = min(array_map('intval', $response->getHeader('X-RateLimit-Remaining')));
+				if ($left == 0){
+					$time = max(array_map('intval', $response->getHeader('X-RateLimit-Reset-After')));
+					sleep($time);
+				}
+			}
+		}
 	}
 }

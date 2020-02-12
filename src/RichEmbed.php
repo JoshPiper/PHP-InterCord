@@ -7,7 +7,7 @@ namespace Internet\InterCord;
 use DateTime;
 use JsonSerializable;
 use DateTimeInterface;
-use Livaco\EasyDiscordWebhook\EmbedField;
+use Internet\InterCord\Internal\EmbedField;
 use Internet\InterCord\Internal\EmbedImage;
 use Internet\InterCord\Internal\EmbedVideo;
 use Internet\InterCord\Internal\EmbedFooter;

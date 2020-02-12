@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Livaco\EasyDiscordWebhook;
+namespace Internet\InterCord\Internal\EasyDiscordWebhook;
 
 
 use JsonSerializable;
@@ -9,7 +9,7 @@ use JsonSerializable;
 /**
  * This class represents a field for a rich embed.
  * Class EmbedField
- * @package Livaco\EasyDiscordWebhook
+ * @package Internet\InterCord\Internal\EasyDiscordWebhook
  */
 class EmbedField implements JsonSerializable {
 	private $name = '';

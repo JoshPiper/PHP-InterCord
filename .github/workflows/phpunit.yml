@@ -1,0 +1,29 @@
+name: PHPUnit Tests
+on: push
+
+jobs:
+  test:
+    name: PHP ${{ matrix.version }} on ${{ matrix.os }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [7.1, 7.2, 7.3, 7.4, 8.0]
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, intl
+          coverage: none
+          tools: composer, phpunit
+      - name: Setup PHPUnit Matcher
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+      - name: Run Tests
+        run: phpdbg -qrr vendor/bin/phpunit --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests
+

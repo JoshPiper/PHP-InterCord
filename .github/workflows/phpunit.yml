@@ -53,7 +53,7 @@ jobs:
       - name: Setup PHPUnit Matcher
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
       - name: Install PHPUnit
-          run: composer global require phpunit:9
+        run: composer global require phpunit:9
       - name: Install Composer Dependencies
         run: composer install --no-ansi --no-dev -oa
       - name: Run Tests

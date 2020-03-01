@@ -11,22 +11,23 @@ jobs:
       matrix:
         version: [7.1, 7.2, 7.3]
         os: [ubuntu-latest, windows-latest]
-      steps:
-        - name: Checkout
-          uses: actions/checkout@master
-        - name: Setup PHP
-          uses: shivammathur/setup-php@v2
-          with:
-            php-version: ${{ matrix.version }}
-            extensions: mbstring, intl
-            coverage: none
-            tools: composer, phpunit:7
-        - name: Setup PHPUnit Matcher
-          run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
-        - name: Install Composer Dependencies
-          run: composer install --no-ansi --no-dev -oa
-        - name: Run Tests
-          run: phpdbg -qrr /usr/local/bin/phpunit --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests7
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.version }}
+          extensions: mbstring, intl
+          coverage: none
+          tools: composer, phpunit:7
+      - name: Setup PHPUnit Matcher
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+      - name: Install Composer Dependencies
+        run: composer install --no-ansi --no-dev -oa
+      - name: Run Tests
+        run: phpdbg -qrr /usr/local/bin/phpunit --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests7
   test:
     name: PHP ${{ matrix.version }} on ${{ matrix.os }} with PHPUnit 9
     runs-on: ${{ matrix.os }}
@@ -36,19 +37,20 @@ jobs:
       matrix:
         version: [7.3, 7.4]
         os: [ubuntu-latest, windows-latest]
-      steps:
-        - name: Checkout
-          uses: actions/checkout@master
-        - name: Setup PHP
-          uses: shivammathur/setup-php@v2
-          with:
-            php-version: ${{ matrix.version }}
-            extensions: mbstring, intl
-            coverage: none
-            tools: composer, phpunit:9
-        - name: Setup PHPUnit Matcher
-          run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
-        - name: Install Composer Dependencies
-          run: composer install --no-ansi --no-dev -oa
-        - name: Run Tests
-          run: phpdbg -qrr /usr/local/bin/phpunit --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests9
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.version }}
+          extensions: mbstring, intl
+          coverage: none
+          tools: composer, phpunit:9
+      - name: Setup PHPUnit Matcher
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+      - name: Install Composer Dependencies
+        run: composer install --no-ansi --no-dev -oa
+      - name: Run Tests
+        run: phpdbg -qrr /usr/local/bin/phpunit --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests9

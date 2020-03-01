@@ -21,9 +21,11 @@ jobs:
           php-version: ${{ matrix.version }}
           extensions: mbstring, intl
           coverage: none
-          tools: composer, phpunit:7.5
+          tools: composer
       - name: Setup PHPUnit Matcher
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+      - name: Install PHPUnit
+        run: composer global require phpunit:7
       - name: Install Composer Dependencies
         run: composer install --no-ansi --no-dev -oa
       - name: Run Tests
@@ -50,6 +52,8 @@ jobs:
           tools: composer, phpunit:9.0
       - name: Setup PHPUnit Matcher
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+      - name: Install PHPUnit
+          run: composer global require phpunit:9
       - name: Install Composer Dependencies
         run: composer install --no-ansi --no-dev -oa
       - name: Run Tests

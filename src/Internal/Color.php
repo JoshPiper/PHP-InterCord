@@ -8,7 +8,7 @@ use JsonSerializable;
 
 /** Class for converting various color forms into a decimal integer.
  * Class Color
- * @package Internet\InterCord
+ * @package Internet\InterCord\Internal
  */
 class Color implements JsonSerializable {
 	private $r = 0;

@@ -7,6 +7,7 @@ namespace Internet\InterCord;
 use DateTime;
 use JsonSerializable;
 use DateTimeInterface;
+use Internet\InterCord\Internal\Color;
 use Internet\InterCord\Internal\EmbedField;
 use Internet\InterCord\Internal\EmbedImage;
 use Internet\InterCord\Internal\EmbedVideo;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Internet\InterCord;
+namespace Internet\InterCord\Internal;
 
 use JsonSerializable;
 

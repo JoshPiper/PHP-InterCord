@@ -49,7 +49,7 @@ jobs:
           php-version: ${{ matrix.version }}
           extensions: mbstring, intl
           coverage: none
-          tools: composer, phpunit:9.0
+          tools: composer
       - name: Setup PHPUnit Matcher
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
       - name: Install PHPUnit

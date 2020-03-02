@@ -6,11 +6,16 @@ use PHPUnit\Framework\TestCase;
 use Internet\InterCord\QueuedWebhook;
 
 class QueuedWebhookFunctionTest extends TestCase {
-	protected $webhook;
+	static $webhook;
 
-	protected function setUp(): void{
-		parent::setUp();
-		$this->webhook = new QueuedWebhook($_SERVER['WEBHOOK_URL']);
+	public static function setUpBeforeClass(): void{
+		parent::setUpBeforeClass();
+		static::$webhook = new QueuedWebhook($_SERVER['WEBHOOK_URL']);
+	}
+
+	public static function tearDownAfterClass(): void{
+		parent::tearDownAfterClass();
+		unset(static::$webhook);
 	}
 
 	public function executionProvider(){

@@ -36,7 +36,7 @@ class QueuedWebhook extends Webhook implements Countable {
 	 * @return Payload|null
 	 */
 	public function next(): ?Payload {
-		if ($this->count() == 0){return;}
+		if ($this->count() == 0){return null;}
 
 		return array_shift($this->queue);
 	}

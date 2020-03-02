@@ -63,4 +63,4 @@ jobs:
         run: phpdbg -qrr $(which phpunit) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests9
       - name: Run Tests (Win)
         if: matrix.os == 'windows-latest'
-        run: echo phpdbg -qrr $(cygpath -w $(which phpunit)) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests9
+        run: phpdbg -qrr $(cygpath -w $(which phpunit)) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests9

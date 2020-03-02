@@ -56,23 +56,27 @@ class Webhook extends Client {
 		}
     	/** @var $payload Payload */
 
-    	$response = $this->post('', [
-    		'body' => json_encode($payload),
-			'query' => ['wait' => $await]
-		]);
+		try {
+			$response = $this->post('', [
+				'body' => json_encode($payload),
+				'query' => ['wait' => $await]
+			]);
+		} catch (ClientException $ex){
+			if ($ex->getCode() == 429){
+				// Rate Limiting
+				$err = json_decode($ex->getResponse()->getBody()->getContents());
+				usleep($err['retry_after']);
+				$this->execute($payload);
+			} else {
+				throw $ex;
+			}
+		}
 
 		$limit = $response->getHeader('X-RateLimit-Limit')[0];
     	$remaining = $response->getHeader('X-RateLimit-Remaining')[0];
 		if ((intval($remaining) / intval($limit)) <= 0.5){
 			$wait = $response->getHeader('X-RateLimit-Reset-After')[0];
 			sleep(intval($wait));
-		}
-
-		if ($response->getStatusCode() == 429){
-			// Rate Limiting
-			$err = json_decode($response->getBody()->getContents());
-			usleep($err['retry_after']);
-			$this->execute($payload);
 		}
 
     	if (!$await){

@@ -62,6 +62,8 @@ class QueuedWebhook extends Webhook implements Countable {
 				$ran++;
 			} catch (ClientException $ex){
 				echo "Something fucked" . PHP_EOL;
+				echo get_class($ex) . ' ' . $ex->getMessage() . PHP_EOL;
+				echo $ex->getTraceAsString() . PHP_EOL;
 				echo PHP_EOL;
 
 				switch ($ex->getCode()){

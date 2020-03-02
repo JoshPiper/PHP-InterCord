@@ -29,6 +29,34 @@ class Webhook extends Client {
     }
 
 	/**
+	 * Create a payload object from a set of content.
+	 * @param $content
+	 * @param string $username
+	 * @param string $avatar
+	 * @return Payload
+	 */
+    public static function createPayload($content, string $username = '', string $avatar = ''): Payload {
+    	if ($content instanceof Payload){
+    		return $content;
+		}
+
+		$payload = new Payload();
+		$payload->setUsername($username);
+		$payload->setAvatar($avatar);
+
+		if (!is_array($content)){$content = [$content];}
+		foreach ($content as $argument){
+			if (is_string($argument)){
+				$payload->setContent($argument);
+			} elseif ($argument instanceof RichEmbed){
+				$payload->addEmbed($argument);
+			}
+		}
+
+		return $payload;
+	}
+
+	/**
 	 * Execute a webhook with either an array of strings/embeds, a string, an embed or a payload object.
 	 * @param $content array|string|RichEmbed|Payload
 	 * @param string $username Username override to set on the payload. Only works if content isn't a payload.
@@ -38,23 +66,7 @@ class Webhook extends Client {
 	 * @throws Exception
 	 */
     public function execute($content, string $username = '', string $avatar = '', bool $await = false): ?Object {
-    	if (!($content instanceof Payload)){
-			$payload = new Payload();
-			$payload->setUsername($username);
-			$payload->setAvatar($avatar);
-
-			if (!is_array($content)){$content = [$content];}
-			foreach ($content as $argument){
-				if (is_string($argument)){
-					$payload->setContent($argument);
-				} elseif ($argument instanceof RichEmbed){
-					$payload->addEmbed($argument);
-				}
-			}
-		} else {
-		    $payload = $content;
-		}
-    	/** @var $payload Payload */
+		$payload = static::createPayload($content, $username, $avatar);
 
 //		try {
 //			$response = $this->post('', [

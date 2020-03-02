@@ -41,6 +41,16 @@ jobs:
       - name: Run Tests (Win)
         if: matrix.os == 'windows-latest'
         run: phpdbg -qrr $(cygpath -w $(which phpunit)) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests7
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v1
+        with:
+          name: Coverage Report
+          path: coverage/
+      - name: Upload Test Report
+          uses: actions/upload-artifact@v1
+          with:
+            name: Test Report
+            path: test.html
 
 
   test:
@@ -77,3 +87,13 @@ jobs:
       - name: Run Tests (Win)
         if: matrix.os == 'windows-latest'
         run: phpdbg -qrr $(cygpath -w $(which phpunit)) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests9
+      - name: Upload Coverage
+          uses: actions/upload-artifact@v1
+          with:
+            name: Coverage Report
+            path: coverage/
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v1
+        with:
+          name: Test Report
+          path: test.html

@@ -77,7 +77,6 @@ class Webhook extends Client {
 		} else {
 			return json_decode($response->getBody()->getContents());
 		}
-
 	}
 
 	public function deliver(Payload $payload){

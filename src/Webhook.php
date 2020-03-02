@@ -66,6 +66,7 @@ class Webhook extends Client {
 				// Rate Limiting
 				$err = json_decode($ex->getResponse()->getBody()->getContents());
 				usleep($err->retry_after);
+				echo "Currently at: " . count(debug_backtrace()) . " deep.";
 				$this->execute($payload);
 			} else {
 				throw $ex;

@@ -48,9 +48,11 @@ class QueuedWebhook extends Webhook implements Countable {
 	 * @throws Exception
 	 */
 	public function run(int $max = 0){
+		echo "Running." . PHP_EOL;
 		$ran = 0;
 
 		while ($this->count() && ($max == 0 || $ran < $max)){
+			echo "Running " . $ran . '/' . $max . ' with ' . $this->count() . ' in queue' . PHP_EOL;
 			$payload = $this->next();
 			try {
 				$this->execute($payload);

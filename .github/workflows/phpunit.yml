@@ -59,5 +59,4 @@ jobs:
       - name: Install Composer Dependencies
         run: composer install --no-ansi --no-dev -oa
       - name: Run Tests
-        run: phpdbg -qrr $(which phpunit) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests9
-        shell: bash
+        run: bash phpdbg -qrr $(which phpunit) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests9

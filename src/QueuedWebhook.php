@@ -54,6 +54,7 @@ class QueuedWebhook extends Webhook implements Countable {
 			$payload = $this->next();
 			try {
 				$this->execute($payload);
+				$ran++;
 			} catch (ClientException $ex){
 				switch ($ex->getCode()){
 					case 429:

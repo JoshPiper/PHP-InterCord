@@ -46,10 +46,10 @@ class Webhook extends Client {
 
 		if (!is_array($content)){$content = [$content];}
 		foreach ($content as $argument){
-			if (is_string($argument)){
-				$payload->setContent($argument);
-			} elseif ($argument instanceof RichEmbed){
+			if ($argument instanceof RichEmbed){
 				$payload->addEmbed($argument);
+			} elseif (is_scalar($argument)){
+				$payload->setContent((string)$argument);
 			}
 		}
 

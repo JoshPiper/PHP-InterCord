@@ -68,21 +68,6 @@ class Webhook extends Client {
     public function execute($content, string $username = '', string $avatar = '', bool $await = false): ?Object {
 		$payload = static::createPayload($content, $username, $avatar);
 
-//		try {
-//			$response = $this->post('', [
-//				'body' => json_encode($payload),
-//				'query' => ['wait' => $await]
-//			]);
-//		} catch (ClientException $ex){
-//			if ($ex->getCode() == 429){
-//				// Rate Limiting
-//				$err = json_decode($ex->getResponse()->getBody()->getContents());
-//				usleep($err->retry_after);
-//				$this->execute($payload);
-//			} else {
-//				throw $ex;
-//			}
-//		}
 		$response = $this->post('', [
 			'body' => json_encode($payload),
 			'query' => ['wait' => $await]

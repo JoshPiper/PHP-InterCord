@@ -65,7 +65,7 @@ class Webhook extends Client {
 			if ($ex->getCode() == 429){
 				// Rate Limiting
 				$err = json_decode($ex->getResponse()->getBody()->getContents());
-				usleep($err['retry_after']);
+				usleep($err->retry_after);
 				$this->execute($payload);
 			} else {
 				throw $ex;

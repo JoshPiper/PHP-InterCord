@@ -58,5 +58,7 @@ jobs:
         run: echo "::add-path::$(composer global config bin-dir --absolute)"
       - name: Install Composer Dependencies
         run: composer install --no-ansi --no-dev -oa
-      - name: Run Tests
-        run: phpdbg -qrr /usr/local/bin/phpunit --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests9
+      - name: Find PHPUnit
+        run: which phpunit
+#      - name: Run Tests
+#        run: phpdbg -qrr $(which phpunit) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests9

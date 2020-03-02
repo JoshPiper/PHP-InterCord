@@ -54,6 +54,8 @@ jobs:
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
       - name: Install PHPUnit
         run: composer global require --no-ansi phpunit/phpunit:9
+      - name: Add Composer Binary to Path
+        run: echo "::add-path::$(composer global config bin-dir --absolute)"
       - name: Install Composer Dependencies
         run: composer install --no-ansi --no-dev -oa
       - name: Run Tests

@@ -31,12 +31,12 @@ class QueuedWebhookFunctionTest extends TestCase {
 	}
 
 	/**
-	 *
 	 * @dataProvider executionProvider
 	 */
 	public function testExecution($content, $username, $avatar, $await){
-		$this->expectNotToPerformAssertions();
 		$this->webhook->append($content, $username, $avatar, $await);
 		$this->webhook->run(1);
+
+		$this->addToAssertionCount(1);
 	}
 }

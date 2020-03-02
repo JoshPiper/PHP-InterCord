@@ -1,0 +1,74 @@
+name: PHPUnit Tests
+on: push
+
+jobs:
+  test7:
+    name: PHP ${{ matrix.version }} on ${{ matrix.os }} with PHPUnit 7
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [7.2, 7.3]
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.version }}
+          extensions: mbstring, intl
+          coverage: none
+          tools: composer
+      - name: Setup PHPUnit Matcher
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+      - name: Install PHPUnit
+        run: composer global require --no-ansi phpunit/phpunit:7
+      - name: Add Composer Binary to Path
+        run: echo "::add-path::$(composer global config bin-dir --absolute)"
+      - name: Install Composer Dependencies
+        run: composer install --no-ansi --no-dev -oa
+      - name: Run Tests (Unix)
+        if: matrix.os == 'ubuntu-latest'
+        run: phpdbg -qrr $(which phpunit) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests7
+      - name: Run Tests (Win)
+        if: matrix.os == 'windows-latest'
+        run: phpdbg -qrr $(cygpath -w $(which phpunit)) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests7
+
+
+  test:
+    name: PHP ${{ matrix.version }} on ${{ matrix.os }} with PHPUnit 9
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [7.3, 7.4]
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.version }}
+          extensions: mbstring, intl
+          coverage: none
+          tools: composer
+      - name: Setup PHPUnit Matcher
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+      - name: Install PHPUnit
+        run: composer global require --no-ansi phpunit/phpunit:9
+      - name: Add Composer Binary to Path
+        run: echo "::add-path::$(composer global config bin-dir --absolute)"
+      - name: Install Composer Dependencies
+        run: composer install --no-ansi --no-dev -oa
+      - name: Run Tests (Unix)
+        if: matrix.os == 'ubuntu-latest'
+        run: phpdbg -qrr $(which phpunit) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests9
+      - name: Run Tests (Win)
+        if: matrix.os == 'windows-latest'
+        run: phpdbg -qrr $(cygpath -w $(which phpunit)) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests9

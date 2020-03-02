@@ -3,14 +3,14 @@
 declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
-use Internet\InterCord\Webhook;
+use Internet\InterCord\QueuedWebhook;
 
-class WebhookFunctionTest extends TestCase {
+class QueuedWebhookFunctionTest extends TestCase {
 	protected $webhook;
 
 	protected function setUp(): void{
 		parent::setUp();
-		$this->webhook = new Webhook($_SERVER['WEBHOOK_URL']);
+		$this->webhook = new QueuedWebhook($_SERVER['WEBHOOK_URL']);
 	}
 
 	public function executionProvider(){

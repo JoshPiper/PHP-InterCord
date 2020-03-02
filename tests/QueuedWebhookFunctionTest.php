@@ -34,6 +34,7 @@ class QueuedWebhookFunctionTest extends TestCase {
 	 * @dataProvider executionProvider
 	 */
 	public function testExecution($content, $username, $avatar){
+		echo floor(memory_get_usage() / 1024);
 		$this->webhook->append($content, $username, $avatar);
 		$this->webhook->run(1);
 

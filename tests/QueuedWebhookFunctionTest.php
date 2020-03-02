@@ -9,7 +9,9 @@ class QueuedWebhookFunctionTest extends TestCase {
 	protected $webhook;
 
 	public function setUp(): void{
+		echo floor(memory_get_usage() / 1024) . PHP_EOL;
 		$this->webhook = new QueuedWebhook($_SERVER['WEBHOOK_URL']);
+		echo floor(memory_get_usage() / 1024) . PHP_EOL;
 	}
 
 	public function tearDown(): void{
@@ -34,7 +36,7 @@ class QueuedWebhookFunctionTest extends TestCase {
 	 * @dataProvider executionProvider
 	 */
 	public function testExecution($content, $username, $avatar){
-		echo floor(memory_get_usage() / 1024);
+		echo floor(memory_get_usage() / 1024) . PHP_EOL;
 		$this->webhook->append($content, $username, $avatar);
 		$this->webhook->run(1);
 

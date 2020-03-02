@@ -5,6 +5,7 @@ namespace Internet\InterCord;
 
 
 use Countable;
+use Exception;
 use Internet\InterCord\Internal\Payload;
 use GuzzleHttp\Exception\ClientException;
 
@@ -44,6 +45,7 @@ class QueuedWebhook extends Webhook implements Countable {
 	/**
 	 * Dispatch queued payloads.
 	 * @param int $max Maxinimum number of payloads to send.
+	 * @throws Exception
 	 */
 	public function run(int $max = 0){
 		$ran = 0;

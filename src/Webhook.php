@@ -61,6 +61,13 @@ class Webhook extends Client {
 			'query' => ['wait' => $await]
 		]);
 
+		$limit = $response->getHeader('X-RateLimit-Limit')[0];
+    	$remaining = $response->getHeader('X-RateLimit-Remaining')[0];
+		if ((intval($remaining) / intval($limit)) <= 0.5){
+			$wait = $response->getHeader('X-RateLimit-Reset-After')[0];
+			sleep(intval($wait));
+		}
+
     	if (!$await){
 			if ($response->getStatusCode() == 204){
 				return null;

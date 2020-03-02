@@ -15,7 +15,7 @@ class QueuedWebhookFunctionTest extends TestCase {
 
 	public static function tearDownAfterClass(): void{
 		parent::tearDownAfterClass();
-		unset(static::$webhook);
+		static::$webhook = null;
 	}
 
 	public function executionProvider(){

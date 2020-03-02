@@ -1,6 +1,11 @@
 name: PHPUnit Tests
 on: push
 
+env:
+  WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+  WEBHOOK_ID: ${{ secrets.WEBHOOK_ID }}
+  WEBHOOK_TOKEN: ${{ secrets.WEBHOOK_TOKEN }}
+
 jobs:
   test7:
     name: PHP ${{ matrix.version }} on ${{ matrix.os }} with PHPUnit 7

@@ -68,6 +68,13 @@ class Webhook extends Client {
 			sleep(intval($wait));
 		}
 
+		if ($response->getStatusCode() == 429){
+			// Rate Limiting
+			$err = json_decode($response->getBody()->getContents());
+			usleep($err['retry_after']);
+			$this->execute($payload);
+		}
+
     	if (!$await){
 			if ($response->getStatusCode() == 204){
 				return null;

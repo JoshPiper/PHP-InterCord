@@ -36,6 +36,7 @@ class QueuedWebhookFunctionTest extends TestCase {
 	 */
 	public function testExecution($content, $username, $avatar, $await){
 		$this->expectNotToPerformAssertions();
-		$this->webhook->execute($content, $username, $avatar, $await);
+		$this->webhook->append($content, $username, $avatar, $await);
+		$this->webhook->run(1);
 	}
 }

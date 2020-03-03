@@ -28,6 +28,7 @@ jobs:
           extensions: mbstring, intl
           coverage: none
           tools: composer
+          ini-values: memory_limit=3G
       - name: Setup PHPUnit Matcher
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
       - name: Install PHPUnit
@@ -77,6 +78,7 @@ jobs:
           extensions: mbstring, intl
           coverage: none
           tools: composer
+          ini-values: memory_limit=3G
       - name: Setup PHPUnit Matcher
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
       - name: Install PHPUnit

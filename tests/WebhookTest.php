@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 use Internet\InterCord\Webhook;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 
 class WebhookTest extends TestCase {
@@ -33,7 +34,11 @@ class WebhookTest extends TestCase {
 	}
 
 	public function testEmptyException(): void {
-		$this->expectException(RequestException::class);
-		$this->webhook->execute('');
+		try {
+			$this->webhook->execute('');
+			$this->fail('Executed successfully');
+		} catch (Exception $ex){
+			$this->assertInstanceOf(ClientException::class, $ex);
+		}
 	}
 }

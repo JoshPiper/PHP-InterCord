@@ -30,7 +30,7 @@ jobs:
           tools: composer
 #          ini-values: memory_limit=4096M
       - name: Get Memory Limit
-        run: php -i | grep "memory_limit"
+        run: phpdbg -i | grep "memory_limit"
       - name: Setup PHPUnit Matcher
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
       - name: Install PHPUnit

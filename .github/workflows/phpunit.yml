@@ -26,8 +26,9 @@ jobs:
         with:
           php-version: ${{ matrix.version }}
           extensions: mbstring, intl
-          coverage: none
+          coverage: pocv
           tools: composer
+#          ini-values: memory_limit=4096M
       - name: Setup PHPUnit Matcher
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
       - name: Install PHPUnit
@@ -38,11 +39,11 @@ jobs:
         run: composer install --no-ansi --no-dev -oa
       - name: Run Tests (Unix)
         if: matrix.os == 'ubuntu-latest'
-        run: phpdbg -qrr $(which phpunit) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests7
+        run: phpunit --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests
         continue-on-error: true
       - name: Run Tests (Win)
         if: matrix.os == 'windows-latest'
-        run: phpdbg -qrr $(cygpath -w $(which phpunit)) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests7
+        run: phpunit --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests
         continue-on-error: true
       - name: Upload Coverage
         uses: actions/upload-artifact@v1
@@ -75,8 +76,9 @@ jobs:
         with:
           php-version: ${{ matrix.version }}
           extensions: mbstring, intl
-          coverage: none
+          coverage: pocv
           tools: composer
+#          ini-values: memory_limit=4096M
       - name: Setup PHPUnit Matcher
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
       - name: Install PHPUnit
@@ -87,11 +89,11 @@ jobs:
         run: composer install --no-ansi --no-dev -oa
       - name: Run Tests (Unix)
         if: matrix.os == 'ubuntu-latest'
-        run: phpdbg -qrr $(which phpunit) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests9
+        run: phpunit --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests
         continue-on-error: true
       - name: Run Tests (Win)
         if: matrix.os == 'windows-latest'
-        run: phpdbg -qrr $(cygpath -w $(which phpunit)) --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests9
+        run: phpunit --debug -vvv --bootstrap vendor/autoload.php --coverage-text --coverage-html coverage --testdox-html test.html --colors=never --whitelist src/ tests
         continue-on-error: true
       - name: Upload Coverage
         uses: actions/upload-artifact@v1

@@ -7,7 +7,6 @@ use Internet\InterCord\QueuedWebhook;
 
 class QueuedWebhookFunctionTest extends TestCase {
 	protected $webhook;
-
 	public function setUp(): void{
 		$this->webhook = new QueuedWebhook($_SERVER['WEBHOOK_URL']);
 	}

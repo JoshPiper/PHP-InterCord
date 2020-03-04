@@ -26,9 +26,9 @@ jobs:
         with:
           php-version: ${{ matrix.version }}
           extensions: mbstring, intl
-          coverage: none
+          coverage: pocv
           tools: composer
-          ini-values: memory_limit=4096M
+#          ini-values: memory_limit=4096M
       - name: Get Memory Limit
         run: php -i | grep "memory_limit"
       - name: Setup PHPUnit Matcher
@@ -78,9 +78,9 @@ jobs:
         with:
           php-version: ${{ matrix.version }}
           extensions: mbstring, intl
-          coverage: none
+          coverage: pocv
           tools: composer
-          ini-values: memory_limit=4096M
+#          ini-values: memory_limit=4096M
       - name: Setup PHPUnit Matcher
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
       - name: Install PHPUnit

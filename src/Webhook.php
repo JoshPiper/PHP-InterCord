@@ -4,7 +4,7 @@ namespace Internet\InterCord;
 
 use Exception;
 use GuzzleHttp\Client;
-use Psr\Http\Message\ResponseInterface;
+use InvalidArgumentException;
 use Internet\InterCord\Internal\Payload;
 use GuzzleHttp\Exception\ClientException;
 
@@ -14,14 +14,26 @@ use GuzzleHttp\Exception\ClientException;
  * @package Internet\InterCord
  */
 class Webhook extends Client {
+	protected const BASE_URL = 'https://discordapp.com/api/webhooks/';
 	/**
 	 * Webhook constructor.
 	 * @param string $url Either the full webhook URL or the webhook ID (assuming webhook token is not empty)
 	 * @param string $token The webhook token.
+	 * @throws InvalidArgumentException
 	 */
     public function __construct(string $url, string $token = ''){
+    	if (!empty($token)){
+    		if (is_numeric($url)){
+    			$uri = static::BASE_URL . "{$url}/{$token}";
+			} else {
+    			throw new InvalidArgumentException('Non-numeric ID passed.');
+			}
+		} else {
+    		$uri = $url;
+		}
+
 		parent::__construct([
-			'base_uri' => empty($token) ? $url : "https://discordapp.com/api/webhooks/{$url}/{$token}",
+			'base_uri' => $uri;
 			'headers' => [
 				'Content-Type' => 'application/json'
 			]

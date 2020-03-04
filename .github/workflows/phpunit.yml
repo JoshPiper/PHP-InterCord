@@ -22,7 +22,7 @@ jobs:
           tools: composer
           ini-values: memory_limit=4096M
       - name: Get Memory Limit
-        run: phpdbg -i "echo phpinfo();"
+        run: phpdbg --help && phpdbg -i "echo phpinfo();"
 
 #  test7:
 #    name: PHP ${{ matrix.version }} on ${{ matrix.os }} with PHPUnit 7

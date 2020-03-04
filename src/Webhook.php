@@ -33,7 +33,7 @@ class Webhook extends Client {
 		}
 
 		parent::__construct([
-			'base_uri' => $uri;
+			'base_uri' => $uri,
 			'headers' => [
 				'Content-Type' => 'application/json'
 			]

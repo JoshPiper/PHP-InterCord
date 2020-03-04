@@ -8,7 +8,6 @@ use Internet\InterCord\Webhook;
 final class WebhookSetupTest extends TestCase {
 	protected function setUp(): void{
 		parent::setUp();
-
 		['WEBHOOK_URL' => $this->url, 'WEBHOOK_ID' => $this->id, 'WEBHOOK_TOKEN' => $this->token] = $_SERVER;
 	}
 

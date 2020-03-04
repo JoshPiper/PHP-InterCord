@@ -48,24 +48,14 @@ class QueuedWebhook extends Webhook implements Countable {
 	 * @throws Exception
 	 */
 	public function run(int $max = 0){
-		echo "Running." . PHP_EOL;
 		$ran = 0;
 
 		while ($this->count() && ($max == 0 || $ran < $max)){
-			echo "Running " . $ran . '/' . $max . ' with ' . $this->count() . ' in queue' . PHP_EOL;
 			$payload = $this->next();
-			echo $this->count() . ' in queue' . PHP_EOL;
 			try {
-				echo "Executing" . PHP_EOL;
 				$this->execute($payload);
-				echo "Executed" . PHP_EOL;
 				$ran++;
 			} catch (ClientException $ex){
-				echo "Something fucked" . PHP_EOL;
-				echo get_class($ex) . ' ' . $ex->getMessage() . PHP_EOL;
-				echo $ex->getTraceAsString() . PHP_EOL;
-				echo PHP_EOL;
-
 				switch ($ex->getCode()){
 					case 429:
 						// Rate Limiting
@@ -81,7 +71,6 @@ class QueuedWebhook extends Webhook implements Countable {
 						throw $ex;
 				}
 			}
-			echo "End of loop. " . $ran . ' ran / ' . $this->count() . ' in queue' . PHP_EOL;
 		}
 	}
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 use Internet\InterCord\Webhook;
+use Internet\InterCord\QueuedWebhook;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 
@@ -14,7 +15,7 @@ class WebhookTest extends TestCase {
 	protected $token;
 	protected function setUp(): void{
 		parent::setUp();
-		$this->webhook = new Webhook($_SERVER['WEBHOOK_URL']);
+		$this->webhook = new QueuedWebhook($_SERVER['WEBHOOK_URL']);
 		['WEBHOOK_URL' => $this->url, 'WEBHOOK_ID' => $this->id, 'WEBHOOK_TOKEN' => $this->token] = $_SERVER;
 	}
 
@@ -34,11 +35,7 @@ class WebhookTest extends TestCase {
 	}
 
 	public function testEmptyException(): void {
-		try {
-			$this->webhook->execute('');
-			$this->fail('Executed successfully');
-		} catch (Exception $ex){
-			$this->assertInstanceOf(ClientException::class, $ex);
-		}
+		$this->expectException(ClientException::class);
+		$this->webhook->execute('');
 	}
 }

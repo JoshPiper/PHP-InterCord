@@ -14,9 +14,9 @@ External classes are generally used for developer facing processes, such as exec
 
 ### External
 `Webhook` is a class which represents a single webhook endpoint.  
-`Color` is a class representing a colour structure. It can be created from R/G/B values, hex codes or decimal numbers.  
 `RichEmbed` is a class which repersents rich embeds, unsuprisingly, and is an easy to use, chainable class to make embeds easier.  
 
 ### Internal
 `Embed*` are a series of classes used to recieve and store data about parts of an embed.  
 `Payload` is a class which stores payloads before they are executed. These can be used for sending data to multiple webhooks, or with minor changes.  
+`Color` is a class representing a colour structure. It can be created from R/G/B values, hex codes or decimal numbers.  

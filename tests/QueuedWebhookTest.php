@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 use Internet\InterCord\QueuedWebhook;
-use const GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ClientException;
 
 class QueuedWebhookTest extends TestCase {
 	protected $webhook;

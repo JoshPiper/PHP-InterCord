@@ -5,7 +5,7 @@ declare(strict_types=1);
 use PHPUnit\Framework\TestCase;
 use Internet\InterCord\QueuedWebhook;
 
-class QueuedWebhookFunctionTest extends TestCase {
+class QueuedWebhookTest extends TestCase {
 	protected $webhook;
 	public function setUp(): void{
 		$this->webhook = new QueuedWebhook($_SERVER['WEBHOOK_URL']);

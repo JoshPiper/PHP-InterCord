@@ -38,4 +38,14 @@ class WebhookTest extends TestCase {
 		$this->expectException(ClientException::class);
 		$this->webhook->execute('');
 	}
+
+	public function testEmptyAwaitingException(): void {
+		$this->expectException(Exception::class);
+		$this->webhook->execute('', 'test', '', true);
+	}
+
+	public function testAwaitingSend(): void {
+		$data = $this->webhook->execute('this is a string', 'test', '', true);
+		$this->assertIsArray($data);
+	}
 }

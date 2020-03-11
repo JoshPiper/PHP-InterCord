@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 use Internet\InterCord\QueuedWebhook;
+use const GuzzleHttp\Exception\ClientException;
 
 class QueuedWebhookTest extends TestCase {
 	protected $webhook;
@@ -30,5 +31,11 @@ class QueuedWebhookTest extends TestCase {
 		}
 		$this->webhook->run();
 		$this->addToAssertionCount(1);
+	}
+
+	public function testEmptyMessageException(){
+		$this->expectException(ClientException::class);
+		$this->webhook->prepend('');
+		$this->webhook->run(1);
 	}
 }

@@ -60,4 +60,16 @@ class EmbedElementsTest extends TestCase {
 		$this->assertEquals(1920, $author['width']);
 		$this->assertEquals(1080, $author['height']);
 	}
+
+	public function testProvider(){
+		$embed = new RichEmbed();
+		$embed->setProvider('provider', 'provider.com');
+
+		$data = $embed->jsonSerialize();
+		$this->assertArrayHasKey('provider', $data);
+
+		$author = $data['video'];
+		$this->assertEquals('provider', $author['name']);
+		$this->assertEquals('provider.com', $author['url']);
+	}
 }

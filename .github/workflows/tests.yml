@@ -54,15 +54,18 @@ jobs:
           WEBHOOK_TOKEN: ${{ secrets.WEBHOOK_TOKEN }}
       - name: Upload Coverage
         uses: actions/upload-artifact@v1
+        continue-on-error: true
         with:
           name: Coverage Report (${{ matrix.php }})
           path: coverage/
       - name: Upload Test Report
         uses: actions/upload-artifact@v1
+        continue-on-error: true
         with:
           name: Test Report (${{ matrix.php }})
           path: test.html
       - name: Upload CodeCov Report
+        continue-on-error: true
         run: wget -qO- https://codecov.io/bash | bash
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

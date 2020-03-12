@@ -89,7 +89,7 @@ class EmbedElementsTest extends TestCase {
 		$data = $embed->jsonSerialize();
 		$this->assertArrayHasKey('provider', $data);
 
-		$provider = $data['video'];
+		$provider = $data['provider'];
 		$this->assertEquals('provider', $provider['name']);
 		$this->assertEquals('provider.com', $provider['url']);
 	}

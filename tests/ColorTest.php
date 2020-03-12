@@ -76,7 +76,7 @@ class ColorTest extends TestCase {
 	}
 
 	/**
-	 * @dataProvider @emptyColors
+	 * @dataProvider emptyColors
 	 * @param int|string|Color $color
 	 */
 	public function testEmptyColoursAreEmpty($color){
@@ -88,7 +88,7 @@ class ColorTest extends TestCase {
 	}
 
 	/**
-	 * @dataProvider @badColors
+	 * @dataProvider badColors
 	 * @param int|string|Color $color
 	 */
 	public function testBadColoursThrowExceptions($color){

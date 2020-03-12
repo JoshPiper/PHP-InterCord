@@ -50,7 +50,7 @@ class EmbedTimeTest extends TestCase {
 	public function formatpairs(){
 		return [
 			['0', 'U', '1970-01-01T00:00:00+0000'],
-			['15-Feb-2009', 'j-M-Y', '2009-02-15T00:00:00+0000']
+			['15-Feb-2009 00:00', 'j-M-Y H:i', '2009-02-15T00:00:00+0000']
 		];
 	}
 

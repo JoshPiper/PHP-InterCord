@@ -63,6 +63,6 @@ jobs:
           name: Test Report (${{ matrix.php }})
           path: test.html
       - name: Upload CodeCov Report
-        run: wget -o uploader https://codecov.io/bash && bash uploader
+        run: wget -qO- https://codecov.io/bash | bash
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

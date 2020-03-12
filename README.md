@@ -1,3 +1,6 @@
+![Unit Testing](https://github.com/JoshPiper/PHP-InterCord/workflows/Unit%20Testing/badge.svg)
+[![codecov](https://codecov.io/gh/JoshPiper/PHP-InterCord/branch/master/graph/badge.svg)](https://codecov.io/gh/JoshPiper/PHP-InterCord)
+
 ## InterCord
 InterCord is a simple PHP Discord Webhooks & Rich Embed library.
 

@@ -55,10 +55,31 @@ class EmbedElementsTest extends TestCase {
 		$data = $embed->jsonSerialize();
 		$this->assertArrayHasKey('video', $data);
 
-		$author = $data['video'];
-		$this->assertEquals('youtube.com', $author['url']);
-		$this->assertEquals(1920, $author['width']);
-		$this->assertEquals(1080, $author['height']);
+		$video = $data['video'];
+		$this->assertEquals('youtube.com', $video['url']);
+		$this->assertEquals(1920, $video['width']);
+		$this->assertEquals(1080, $video['height']);
+	}
+
+	public function testImages(){
+		$embed = new RichEmbed();
+		$embed->setImage('imgur.com', 'proxy.imgur.com', 1920, 1080);
+		$embed->setThumbnail('imgur.com', 'proxy.imgur.com', 1920, 1080);
+
+		$data = $embed->jsonSerialize();
+		$this->assertArrayHasKey('image', $data);
+
+		$image = $data['image'];
+		$this->assertEquals('imgur.com', $image['url']);
+		$this->assertEquals('proxy.imgur.com', $image['url']);
+		$this->assertEquals(1920, $image['width']);
+		$this->assertEquals(1080, $image['height']);
+
+		$thumb = $data['thumbnail'];
+		$this->assertEquals('imgur.com', $thumb['proxy_url']);
+		$this->assertEquals('proxy.imgur.com', $image['proxy_url']);
+		$this->assertEquals(1920, $thumb['width']);
+		$this->assertEquals(1080, $thumb['height']);
 	}
 
 	public function testProvider(){

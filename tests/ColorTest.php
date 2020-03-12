@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 use Internet\InterCord\RichEmbed;
 use Internet\InterCord\Internal\Color;
 
-class EmbedTest extends TestCase {
+class ColorTest extends TestCase {
 	/** Data provider for colours, and their corresponding decimal colour.
 	 * @return array
 	 */

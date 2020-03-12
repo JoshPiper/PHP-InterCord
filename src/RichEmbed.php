@@ -165,8 +165,8 @@ class RichEmbed implements jsonSerializable {
 	 * @param int $width
 	 * @return $this
 	 */
-	public function setVideo(string $url = '', int $height = 0, int $width = 0): self{
-		$this->video = new EmbedVideo($url, $height, $width);
+	public function setVideo(string $url = '', int $width = 0, int $height = 0): self{
+		$this->video = new EmbedVideo($url, $width, $height);
 		return $this;
 	}
 

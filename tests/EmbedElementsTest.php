@@ -93,4 +93,17 @@ class EmbedElementsTest extends TestCase {
 		$this->assertEquals('provider', $provider['name']);
 		$this->assertEquals('provider.com', $provider['url']);
 	}
+
+	public function testFooter(){
+		$embed = new RichEmbed();
+		$embed->setFooter('footer text', 'imgur.com', 'proxy.imgur.com');
+
+		$data = $embed->jsonSerialize();
+		$this->assertArrayHasKey('footer', $data);
+
+		$footer = $data['footer'];
+		$this->assertEquals('footer text', $footer['text']);
+		$this->assertEquals('imgur.com', $footer['icon_url']);
+		$this->assertEquals('proxy.imgur.com', $footer['proxy_icon_url']);
+	}
 }

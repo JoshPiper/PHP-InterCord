@@ -93,11 +93,7 @@ class Webhook extends Client {
 		}
 
     	if (!$await){
-			if ($response->getStatusCode() == 204){
-				return null;
-			} else {
-				throw new Exception("Message failed to send.");
-			}
+    		return null;
 		} else {
 			return json_decode($response->getBody()->getContents());
 		}

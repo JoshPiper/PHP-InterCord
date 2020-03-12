@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
+use Internet\InterCord\RichEmbed;
 use Internet\InterCord\QueuedWebhook;
 use Internet\InterCord\Internal\Payload;
 use GuzzleHttp\Exception\ClientException;
@@ -18,7 +19,7 @@ class QueuedWebhookTest extends TestCase {
 	}
 
 	public function payloads(){
-		$contents = ['content', '1234', 4321, ['array with one arg', (new \Internet\InterCord\RichEmbed())->addField("hi", "yes")]];
+		$contents = ['content', '1234', 4321, ['array with one arg', (new RichEmbed())->addField("hi", "yes")]];
 		$usernames = ['', 'testUser'];
 		$avatars = ['', 'https://images.theconversation.com/files/93616/original/image-20150902-6700-t2axrz.jpg?ixlib=rb-1.1.0&q=45&auto=format&w=1000&fit=clip'];
 
@@ -53,6 +54,14 @@ class QueuedWebhookTest extends TestCase {
 	 */
 	public function testDelivery($content, $username, $avatar){
 		$this->webhook->deliver($content, $username, $avatar);
+		$this->assertEquals($this->webhook->count(), 0, "empty");
+	}
+
+	public function test(){
+		$embed = new RichEmbed();
+		$embed->addField("CI?", "yes", true);
+
+		$this->webhook->deliver($embed);
 		$this->assertEquals($this->webhook->count(), 0, "empty");
 	}
 

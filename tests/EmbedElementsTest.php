@@ -47,4 +47,17 @@ class EmbedElementsTest extends TestCase {
 		$this->assertEquals('imgur.com', $author['icon_url']);
 		$this->assertEquals('proxy.imgur.com', $author['proxy_icon_url']);
 	}
+
+	public function testVideos(){
+		$embed = new RichEmbed();
+		$embed->setVideo('youtube.com', 1920, 1080);
+
+		$data = $embed->jsonSerialize();
+		$this->assertArrayHasKey('video', $data);
+
+		$author = $data['video'];
+		$this->assertEquals('youtube.com', $author['url']);
+		$this->assertEquals(1920, $author['width']);
+		$this->assertEquals(1080, $author['height']);
+	}
 }

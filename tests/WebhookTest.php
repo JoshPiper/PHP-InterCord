@@ -45,7 +45,22 @@ class WebhookTest extends TestCase {
 	}
 
 	public function testAwaitingSend(): void {
-		$data = $this->webhook->execute('this is a string', 'test', '', true);
-		$this->assertIsArray($data);
+		$ran = false;
+		while (!$ran){
+			try {
+				$data = $this->webhook->execute('this is a string', 'test', '', true);
+				$ran = true;
+				$this->assertIsArray($data);
+			} catch (ClientException $ex){
+				if ($ex->getCode() == 429){
+					$err = json_decode($ex->getResponse()->getBody()->getContents());
+					usleep($err->retry_after * 2);
+				} else {
+					throw $ex;
+				}
+			}
+		}
+
+
 	}
 }

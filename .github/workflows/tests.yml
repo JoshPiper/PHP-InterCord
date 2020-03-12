@@ -1,0 +1,71 @@
+name: Unit Testing
+on: push
+
+env:
+  COMPOSER_ALLOW_SUPERUSER: 1
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [7.2, 7.3, 7.4]
+    container: php:${{ matrix.php }}-alpine
+    steps:
+      - name: Install php.ini
+        run: mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+      - name: Install APK Dependencies
+        run: apk update && apk add --no-cache -q git unzip mysql-client autoconf gcc g++ make perl bash
+      - name: Install PECL Extensions
+        run: pear config-set php_ini "$PHP_INI_DIR/php.ini" && pecl install pcov && docker-php-ext-enable pcov
+      - name: Install Composer
+        id: composer-install
+        run: |
+          wget -O installer https://getcomposer.org/installer
+          php installer --install-dir=/usr/local/bin --filename=composer
+          echo "::set-output name=cache-dir::$(composer global config cache-files-dir)"
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Restore Composer Cache
+        uses: actions/cache@v1
+        with:
+          key: composer-${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+          path: ${{ steps.composer-install.outputs.cache-dir }}
+          restore-keys: composer-${{ runner.os }}- composer--
+      - name: Install Dependencies & Update PHPUnit
+        run: composer update --no-ansi --with-dependencies phpunit/phpunit
+      - name: Check PHPUnit Version
+        id: phpunit-check
+        run: |
+          info=$(composer show phpunit/phpunit)
+          version=$(echo "$info" | perl -ne 'print "$&\n" if /(?<=versions : \* )[\d\w.-_]+/s')
+          major=$(echo "$version" | perl -ne 'print "$&\n" if /\d/s')
+          echo "::set-output name=major::$major"
+      - name: Install Legacy POCV Polyfill
+        run: composer pcov-polyfill
+        if: steps.phpunit-check.outputs.major < 8
+      - name: Run Tests
+        run: composer test
+        continue-on-error: true
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          WEBHOOK_ID: ${{ secrets.WEBHOOK_ID }}
+          WEBHOOK_TOKEN: ${{ secrets.WEBHOOK_TOKEN }}
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v1
+        continue-on-error: true
+        with:
+          name: Coverage Report (${{ matrix.php }})
+          path: coverage/
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v1
+        continue-on-error: true
+        with:
+          name: Test Report (${{ matrix.php }})
+          path: test.html
+      - name: Upload CodeCov Report
+        continue-on-error: true
+        run: wget -qO- https://codecov.io/bash | bash
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

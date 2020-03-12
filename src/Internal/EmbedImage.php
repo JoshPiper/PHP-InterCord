@@ -18,8 +18,8 @@ class EmbedImage extends EmbedVideo {
 	 * @param int $height The height of the image.
 	 * @param int $width The width of the image.
 	 */
-	public function __construct(string $url = '', string $proxy_url = '', int $height = 0, int $width = 0){
-		parent::__construct($url, $height, $width);
+	public function __construct(string $url = '', string $proxy_url = '', int $width = 0, int $height = 0){
+		parent::__construct($url, $width, $height);
 		$this->proxy_url = $proxy_url;
 	}
 

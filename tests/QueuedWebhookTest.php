@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 use Internet\InterCord\QueuedWebhook;
+use Internet\InterCord\Internal\Payload;
+use GuzzleHttp\Exception\ClientException;
 
-class QueuedWebhookFunctionTest extends TestCase {
+class QueuedWebhookTest extends TestCase {
 	protected $webhook;
-
 	public function setUp(): void{
 		$this->webhook = new QueuedWebhook($_SERVER['WEBHOOK_URL']);
 	}
@@ -30,6 +31,19 @@ class QueuedWebhookFunctionTest extends TestCase {
 			}
 		}
 		$this->webhook->run();
+		$this->addToAssertionCount(1);
+	}
+
+	public function testEmptyMessageException(){
+		$this->expectException(ClientException::class);
+		$this->webhook->prepend('');
+		$this->webhook->run(1);
+	}
+
+	public function testSendingTTSMessage(){
+		$this->webhook->prepend((new Payload())->setTTS(true)->setContent('hello'));
+		$this->addToAssertionCount(1);
+		$this->webhook->run(1);
 		$this->addToAssertionCount(1);
 	}
 }

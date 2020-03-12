@@ -93,45 +93,9 @@ class Webhook extends Client {
 		}
 
     	if (!$await){
-			if ($response->getStatusCode() == 204){
-				return null;
-			} else {
-				throw new Exception("Message failed to send.");
-			}
+    		return null;
 		} else {
 			return json_decode($response->getBody()->getContents());
-		}
-	}
-
-	public function deliver(Payload $payload){
-    	$delivered = false;
-    	while (!$delivered){
-    		try {
-				$response = $this->post('', [
-					'body' => json_encode($payload),
-					'query' => ['wait' => true]
-				]);
-				$left = min(array_map('intval', $response->getHeader('X-RateLimit-Remaining')));
-				if ($left == 0){
-					$time = max(array_map('intval', $response->getHeader('X-RateLimit-Reset-After')));
-					sleep($time);
-				}
-    			$delivered = true;
-			} catch (ClientException $client_exception){
-				$code = $client_exception->getCode();
-    			if ($code == 429){
-					$response = $client_exception->getResponse();
-					$left = min(array_map('intval', $response->getHeader('X-RateLimit-Remaining')));
-					if ($left == 0){
-						$time = max(array_map('intval', $response->getHeader('X-RateLimit-Reset-After')));
-						sleep($time);
-					}
-				} elseif ($code == 502){
-    				sleep(2);
-				} else {
-					throw $client_exception;
-				}
-			}
 		}
 	}
 }

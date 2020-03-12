@@ -19,10 +19,10 @@ class EmbedVideo implements JsonSerializable {
 	/**
 	 * EmbedVideo constructor.
 	 * @param string $url Video URL
-	 * @param int $height Height of the video.
 	 * @param int $width Width of the video.
+	 * @param int $height Height of the video.
 	 */
-	public function __construct(string $url = '', int $height = 0, int $width = 0){
+	public function __construct(string $url = '', int $width = 0, int $height = 0){
 		$this->url = $url;
 		$this->height = $height;
 		$this->width = $width;

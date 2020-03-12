@@ -80,4 +80,17 @@ class QueuedWebhook extends Webhook implements Countable {
 	public function count(){
 		return count($this->queue);
 	}
+
+	/**
+	 * Add a payload to the start of the queue, and ensure it's delivered.
+	 * @param $content
+	 * @param string $username
+	 * @param string $avatar
+	 * @throws Exception
+	 * @see run
+	 */
+	public function deliver($content, string $username = '', string $avatar = ''){
+		$this->prepend($content, $username, $avatar);
+		$this->run(1);
+	}
 }

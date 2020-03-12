@@ -50,7 +50,7 @@ class WebhookTest extends TestCase {
 			try {
 				$data = $this->webhook->execute('this is a string', 'test', '', true);
 				$ran = true;
-				$this->assertIsArray($data);
+				$this->assertIsObject($data);
 			} catch (ClientException $ex){
 				if ($ex->getCode() == 429){
 					$err = json_decode($ex->getResponse()->getBody()->getContents());

@@ -71,7 +71,7 @@ class EmbedElementsTest extends TestCase {
 
 		$image = $data['image'];
 		$this->assertEquals('imgur.com', $image['url']);
-		$this->assertEquals('proxy.imgur.com', $image['url']);
+		$this->assertEquals('proxy.imgur.com', $image['proxy_url']);
 		$this->assertEquals(1920, $image['width']);
 		$this->assertEquals(1080, $image['height']);
 

@@ -33,4 +33,18 @@ class EmbedElementsTest extends TestCase {
 		$this->assertArrayHasKey('url', $data);
 		$this->assertEquals('hello', $data['url']);
 	}
+
+	public function testAuthor(){
+		$embed = new RichEmbed();
+		$embed->setAuthor('hello', 'google.com', 'imgur.com', 'proxy.imgur.com');
+
+		$data = $embed->jsonSerialize();
+		$this->assertArrayHasKey('author', $data);
+
+		$author = $data['author'];
+		$this->assertEquals('hello', $author['name']);
+		$this->assertEquals('google.com', $author['url']);
+		$this->assertEquals('imgur.com', $author['icon_url']);
+		$this->assertEquals('proxy.imgur.com', $author['proxy_icon_url']);
+	}
 }

@@ -16,7 +16,7 @@ jobs:
       - name: Install php.ini
         run: mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
       - name: Install APK Dependencies
-        run: apk update && apk add --no-cache -q git unzip mysql-client autoconf gcc g++ make perl
+        run: apk update && apk add --no-cache -q git unzip mysql-client autoconf gcc g++ make perl bash
       - name: Install PECL Extensions
         run: pear config-set php_ini "$PHP_INI_DIR/php.ini" && pecl install pcov && docker-php-ext-enable pcov
       - name: Install Composer
@@ -62,3 +62,7 @@ jobs:
         with:
           name: Test Report (${{ matrix.php }})
           path: test.html
+      - name: Upload CodeCov Report
+        run: bash <(curl -s https://codecov.io/bash)
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

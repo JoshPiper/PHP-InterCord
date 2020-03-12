@@ -47,6 +47,7 @@ jobs:
         if: steps.phpunit-check.outputs.major < 8
       - name: Run Tests
         run: composer test
+        continue-on-error: true
         env:
           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
           WEBHOOK_ID: ${{ secrets.WEBHOOK_ID }}

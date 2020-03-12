@@ -42,6 +42,8 @@ class QueuedWebhookTest extends TestCase {
 
 	public function testSendingTTSMessage(){
 		$this->webhook->prepend((new Payload())->setTTS(true)->setContent('hello'));
+		$this->addToAssertionCount(1);
 		$this->webhook->run(1);
+		$this->addToAssertionCount(1);
 	}
 }

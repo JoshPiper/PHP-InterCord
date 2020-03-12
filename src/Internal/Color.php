@@ -51,7 +51,7 @@ class Color implements JsonSerializable {
 	 * @return Color
 	 */
 	public static function fromDecimal(int $number): Color{
-		return new static($number & 0xFF0000, $number & 0x00FF00, $number & 0x0000FF);
+		return new static(($number & 0xFF0000) >> 16, ($number & 0x00FF00) >> 8, $number & 0x0000FF);
 	}
 
 	/**

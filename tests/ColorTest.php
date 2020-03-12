@@ -41,11 +41,11 @@ class ColorTest extends TestCase {
 	 */
 	public function emptyColors(){
 		return [
-			0,
-			'0',
-			'#000',
-			'#000000',
-			new Color(0, 0, 0)
+			[0],
+			['0'],
+			['#000'],
+			['#000000'],
+			[new Color(0, 0, 0)]
 		];
 	}
 
@@ -54,10 +54,10 @@ class ColorTest extends TestCase {
 	 */
 	public function badColors(){
 		return [
-			16777216, // Above the largest value.
-			-1, // Below 0.
-			'#00', // Not a hex triplet.
-			'#00000000' // Not a hex triplet either.
+			[16777216], // Above the largest value.
+			[-1], // Below 0.
+			['#00'], // Not a hex triplet.
+			['#00000000'] // Not a hex triplet either.
 		];
 	}
 

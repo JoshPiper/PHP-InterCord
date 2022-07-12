@@ -34,7 +34,7 @@ jobs:
           path: ${{ steps.composer-install.outputs.cache-dir }}
           restore-keys: composer-${{ runner.os }}- composer--
       - name: Install Dependencies & Update PHPUnit
-        run: composer update --no-ansi --with-dependencies phpunit/phpunit
+        run: composer update
       - name: Check PHPUnit Version
         id: phpunit-check
         run: |

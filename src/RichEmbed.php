@@ -16,7 +16,7 @@ use Internet\InterCord\Internal\EmbedAuthor;
 use Internet\InterCord\Internal\EmbedProvider;
 
 /**
- * The richembed class provides an interface between discord and their rich embed feature.
+ * The rich embed class provides an interface between discord and their rich embed feature.
  * Class RichEmbed
  * @package Internet\InterCord
  */
@@ -95,7 +95,7 @@ class RichEmbed implements jsonSerializable {
 	 * @param mixed $color
 	 * @return RichEmbed
 	 */
-	public function setColor($color): self{
+	public function setColor($color): self {
 		if (is_numeric($color)){
 			$this->color = Color::fromDecimal($color);
 		} elseif (is_string($color)){
@@ -114,7 +114,7 @@ class RichEmbed implements jsonSerializable {
 	 * @param string $proxy_icon
 	 * @return $this
 	 */
-	public function setFooter(string $text, string $icon = '', string $proxy_icon = ''): self{
+	public function setFooter(string $text, string $icon = '', string $proxy_icon = ''): self {
 		$this->footer = new EmbedFooter($text, $icon, $proxy_icon);
 		return $this;
 	}
@@ -127,7 +127,7 @@ class RichEmbed implements jsonSerializable {
 	 * @param string $proxy_icon
 	 * @return $this
 	 */
-	public function setAuthor(string $name = '', string $url = '', string $icon = '', string $proxy_icon = ''): self{
+	public function setAuthor(string $name = '', string $url = '', string $icon = '', string $proxy_icon = ''): self {
 		$this->author = new EmbedAuthor($name, $url, $icon, $proxy_icon);
 		return $this;
 	}
@@ -140,7 +140,7 @@ class RichEmbed implements jsonSerializable {
 	 * @param int $width
 	 * @return $this
 	 */
-	public function setImage(string $url = '', string $proxy = '', int $width = 0, int $height = 0): self{
+	public function setImage(string $url = '', string $proxy = '', int $width = 0, int $height = 0): self {
 		$this->image = new EmbedImage($url, $proxy, $width, $height);
 		return $this;
 	}
@@ -153,7 +153,7 @@ class RichEmbed implements jsonSerializable {
 	 * @param int $width
 	 * @return $this
 	 */
-	public function setThumbnail(string $url = '', string $proxy = '', int $width = 0, int $height = 0): self{
+	public function setThumbnail(string $url = '', string $proxy = '', int $width = 0, int $height = 0): self {
 		$this->thumbnail = new EmbedImage($url, $proxy, $width, $height);
 		return $this;
 	}
@@ -165,7 +165,7 @@ class RichEmbed implements jsonSerializable {
 	 * @param int $width
 	 * @return $this
 	 */
-	public function setVideo(string $url = '', int $width = 0, int $height = 0): self{
+	public function setVideo(string $url = '', int $width = 0, int $height = 0): self {
 		$this->video = new EmbedVideo($url, $width, $height);
 		return $this;
 	}
@@ -176,13 +176,14 @@ class RichEmbed implements jsonSerializable {
 	 * @param string $url
 	 * @return $this
 	 */
-	public function setProvider(string $name = '', string $url = ''): self{
+	public function setProvider(string $name = '', string $url = ''): self {
 		$this->provider = new EmbedProvider($name, $url);
 		return $this;
 	}
 
 	/**
 	 * Adds a field to this embed.
+	 *
 	 * @param string $name
 	 * @param string $value
 	 * @param bool $inline

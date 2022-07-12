@@ -18,9 +18,9 @@ class QueuedWebhook extends Webhook implements Countable {
 	 * @param string $username
 	 * @param string $avatar
 	 */
-	public function append($content, string $username = '', string $avatar = ''){
+	public function append($content, string $username = '', string $avatar = ''): void {
 		$payload = static::createPayload($content, $username, $avatar);
-		array_push($this->queue, $payload);
+		$this->queue[] = $payload;
 	}
 
 	/** Prepend a Payload to the queue.
@@ -28,7 +28,7 @@ class QueuedWebhook extends Webhook implements Countable {
 	 * @param string $username
 	 * @param string $avatar
 	 */
-	public function prepend($content, string $username = '', string $avatar = ''){
+	public function prepend($content, string $username = '', string $avatar = ''): void {
 		$payload = static::createPayload($content, $username, $avatar);
 		array_unshift($this->queue, $payload);
 	}
@@ -44,10 +44,10 @@ class QueuedWebhook extends Webhook implements Countable {
 
 	/**
 	 * Dispatch queued payloads.
-	 * @param int $max Maxinimum number of payloads to send.
+	 * @param int $max Maximum number of payloads to send.
 	 * @throws Exception
 	 */
-	public function run(int $max = 0){
+	public function run(int $max = 0): void {
 		$ran = 0;
 
 		while ($this->count() && ($max == 0 || $ran < $max)){
@@ -77,7 +77,7 @@ class QueuedWebhook extends Webhook implements Countable {
 	/**
 	 * @inheritDoc
 	 */
-	public function count(){
+	public function count(): int {
 		return count($this->queue);
 	}
 
@@ -89,7 +89,7 @@ class QueuedWebhook extends Webhook implements Countable {
 	 * @throws Exception
 	 * @see run
 	 */
-	public function deliver($content, string $username = '', string $avatar = ''){
+	public function deliver($content, string $username = '', string $avatar = ''): void {
 		$this->prepend($content, $username, $avatar);
 		$this->run(1);
 	}

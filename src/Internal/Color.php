@@ -37,7 +37,7 @@ class Color implements JsonSerializable {
 		$colors = array_map('hexdec', str_split($code, intdiv(strlen($code), 3)));
 
 		if (strlen($code) === 3){
-			$colors = array_map(function($color){
+			$colors = array_map(static function($color){
 				return $color + ($color * 16);
 			}, $colors);
 		}

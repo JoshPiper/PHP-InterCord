@@ -37,7 +37,7 @@ class QueuedWebhook extends Webhook implements Countable {
 	 * @return Payload|null
 	 */
 	public function next(): ?Payload {
-		if ($this->count() == 0){return null;}
+		if ($this->count() === 0){return null;}
 
 		return array_shift($this->queue);
 	}
@@ -50,25 +50,22 @@ class QueuedWebhook extends Webhook implements Countable {
 	public function run(int $max = 0): void {
 		$ran = 0;
 
-		while ($this->count() && ($max == 0 || $ran < $max)){
+		while ($this->count() && ($max === 0 || $ran < $max)){
 			$payload = $this->next();
 			try {
 				$this->execute($payload);
 				$ran++;
 			} catch (ClientException $ex){
-				switch ($ex->getCode()){
-					case 429:
-						// Rate Limiting
+				if ($ex->getCode() === 429){
+					// Getting rate limited.
+					// Re-add our payload to the front of the queue.
+					$this->prepend($payload);
 
-						// Re-add our payload to the front of the queue.
-						$this->prepend($payload);
-
-						// And delay for however long discord wants.
-						$err = json_decode($ex->getResponse()->getBody()->getContents());
-						usleep($err->retry_after);
-						break;
-					default:
-						throw $ex;
+					// And delay for however long discord wants.
+					$err = json_decode($ex->getResponse()->getBody()->getContents(), false);
+					usleep($err->retry_after);
+				} else {
+					throw $ex;
 				}
 			}
 		}

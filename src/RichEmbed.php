@@ -189,7 +189,7 @@ class RichEmbed implements jsonSerializable {
 	 * @param bool $inline
 	 * @return $this
 	 */
-	public function addField(string $name, string $value, $inline = false): self{
+	public function addField(string $name, string $value, bool $inline = false): self {
 		$this->fields[] = new EmbedField($name, $value, $inline);
 		return $this;
 	}
@@ -204,7 +204,7 @@ class RichEmbed implements jsonSerializable {
 			'type' => 'rich',
 			'description' => $this->description,
 			'url' => $this->url,
-			'timestamp' => isset($this->timestamp) ? $this->timestamp->format(DATE_ISO8601) : false,
+			'timestamp' => isset($this->timestamp) ? $this->timestamp->format(DATE_ATOM) : false,
 			'color' => isset($this->color) ? $this->color->jsonSerialize() : 0,
 			'footer' => isset($this->footer) ? $this->footer->jsonSerialize() : false,
 			'image' => isset($this->image) ? $this->image->jsonSerialize() : false,
@@ -212,7 +212,7 @@ class RichEmbed implements jsonSerializable {
 			'video' => isset($this->video) ? $this->video->jsonSerialize() : false,
 			'provider' => isset($this->provider) ? $this->provider->jsonSerialize() : false,
 			'author' => isset($this->author) ? $this->author->jsonSerialize() : false,
-			'fields' => array_map(function($field){return $field->jsonSerialize();}, $this->fields)
+			'fields' => array_map(static function($field){return $field->jsonSerialize();}, $this->fields)
 		]);
 	}
 }

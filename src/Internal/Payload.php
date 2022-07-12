@@ -79,7 +79,7 @@ class Payload implements JsonSerializable {
 			'username' => $this->username,
 			'avatar_url' => $this->avatar,
 			'tts' => $this->tts,
-			'embeds' => array_map(function($embed){return $embed->jsonSerialize();}, $this->embeds)
+			'embeds' => array_map(static function($embed){return $embed->jsonSerialize();}, $this->embeds)
 		]);
 	}
 }

@@ -1,42 +1,32 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Internet\InterCord\Internal;
-
 
 use JsonSerializable;
 
 /**
- * This class represents a field for a rich embed.
- * Class EmbedField
- * @package Internet\InterCord\Internal
+ * @internal
  */
-class EmbedField implements JsonSerializable {
-	private $name = '';
-	private $value = '';
-	private $inline;
-
-	/**
-	 * EmbedField constructor.
-	 * @param string $name
-	 * @param string $value
-	 * @param bool $inline
-	 */
-	public function __construct(string $name = '', string $value = '', bool $inline = false){
-		$this->name = $name;
-		$this->value = $value;
-		$this->inline = $inline;
+final class EmbedField implements JsonSerializable
+{
+	public function __construct(
+		private readonly string $name = '',
+		private readonly string $value = '',
+		private readonly bool $inline = false,
+	) {
 	}
 
 	/**
-	 * Convert the object into an associative array.
-	 * @return array
+	 * @return array<string, string|bool>
 	 */
-	public function jsonSerialize(): array{
+	public function jsonSerialize(): array
+	{
 		return array_filter([
 			'name' => $this->name,
 			'value' => $this->value,
-			'inline' => $this->inline
+			'inline' => $this->inline,
 		]);
 	}
 }

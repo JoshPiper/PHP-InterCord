@@ -1,42 +1,30 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Internet\InterCord\Internal;
-
 
 use JsonSerializable;
 
 /**
- * This class represents a rich embed footer.
- * Class EmbedFooter
- * @package Internet\InterCord\Internal
+ * @internal
  */
-class EmbedFooter implements JsonSerializable {
-	private $text = '';
-	private $icon_url;
-	private $proxy_icon_url;
-
-	/**
-	 * EmbedFooter constructor.
-	 * @param string $text The footer text.
-	 * @param string $icon_url Icon for the footer.
-	 * @param string $proxy_icon_url -
-	 */
-	public function __construct(string $text = '', string $icon_url = '', string $proxy_icon_url = ''){
-		$this->text = $text;
-		$this->icon_url = $icon_url;
-		$this->proxy_icon_url = $proxy_icon_url;
+final class EmbedFooter implements JsonSerializable
+{
+	public function __construct(
+		private readonly string $text = '',
+		private readonly string $iconUrl = '',
+	) {
 	}
 
 	/**
-	 * Convert the object into an associative array.
-	 * @return array
+	 * @return array<string, string>
 	 */
-	public function jsonSerialize(){
+	public function jsonSerialize(): array
+	{
 		return array_filter([
 			'text' => $this->text,
-			'icon_url' => $this->icon_url,
-			'proxy_icon_url' => $this->proxy_icon_url
+			'icon_url' => $this->iconUrl,
 		]);
 	}
 }

@@ -14,6 +14,9 @@ use JsonSerializable;
  */
 final class Payload implements JsonSerializable
 {
+	private const SUPPRESS_EMBEDS = 1 << 2;
+	private const SUPPRESS_NOTIFICATIONS = 1 << 12;
+
 	private ?string $content = null;
 	private ?string $username = null;
 	private ?string $avatar = null;
@@ -21,6 +24,8 @@ final class Payload implements JsonSerializable
 	/** @var list<RichEmbed> */
 	private array $embeds = [];
 	private ?AllowedMentions $allowedMentions = null;
+	private ?bool $suppressEmbeds = null;
+	private ?bool $suppressNotifications = null;
 	/** @var array<string, PayloadField> Fields an edit should remove, keyed by case name. */
 	private array $cleared = [];
 	private ?string $threadName = null;
@@ -121,6 +126,25 @@ final class Payload implements JsonSerializable
 	}
 
 	/**
+	 * Hide the link previews Discord would otherwise generate for URLs in the content. On an edit, false brings
+	 * them back.
+	 */
+	public function suppressEmbeds(bool $suppress = true): self
+	{
+		$this->suppressEmbeds = $suppress;
+		return $this;
+	}
+
+	/**
+	 * Send without push or desktop notifications ("@silent"). Only applies when the message is first sent.
+	 */
+	public function suppressNotifications(bool $suppress = true): self
+	{
+		$this->suppressNotifications = $suppress;
+		return $this;
+	}
+
+	/**
 	 * Limit which mentions in the content notify anyone. Discord's default, when this isn't set, is that all do.
 	 */
 	public function setAllowedMentions(AllowedMentions $allowedMentions): self
@@ -208,8 +232,16 @@ final class Payload implements JsonSerializable
 		if ($this->threadName !== null || $this->appliedTags !== []) {
 			throw new InvalidArgumentException('A post can only be started, and tagged, when the message is first sent.');
 		}
+		if ($this->suppressNotifications !== null) {
+			throw new InvalidArgumentException('Notifications can only be suppressed when the message is first sent.');
+		}
 
 		$body = $this->jsonSerialize();
+		// On an edit, an explicit false has to be sent so Discord turns link previews back on.
+		unset($body['flags']);
+		if ($this->suppressEmbeds !== null) {
+			$body['flags'] = $this->suppressEmbeds ? self::SUPPRESS_EMBEDS : 0;
+		}
 		foreach ($this->cleared as $field) {
 			match ($field) {
 				PayloadField::Content => $body['content'] = null,
@@ -225,6 +257,9 @@ final class Payload implements JsonSerializable
 	 */
 	public function jsonSerialize(): array
 	{
+		$flags = ($this->suppressEmbeds === true ? self::SUPPRESS_EMBEDS : 0)
+			| ($this->suppressNotifications === true ? self::SUPPRESS_NOTIFICATIONS : 0);
+
 		return Json::withoutEmpty([
 			'content' => $this->content,
 			'username' => $this->username,
@@ -232,6 +267,7 @@ final class Payload implements JsonSerializable
 			'tts' => $this->tts,
 			'embeds' => array_map(static fn(RichEmbed $embed): array => $embed->jsonSerialize(), $this->embeds),
 			'allowed_mentions' => $this->allowedMentions?->jsonSerialize(),
+			'flags' => $flags === 0 ? null : $flags,
 			'thread_name' => $this->threadName,
 			'applied_tags' => array_map(static fn(Snowflake $tag): string => $tag->value, $this->appliedTags),
 		]);

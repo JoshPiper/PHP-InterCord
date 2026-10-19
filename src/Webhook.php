@@ -191,6 +191,14 @@ final class Webhook
 	}
 
 	/**
+	 * A new, empty queue that sends through this webhook. Each call gives a separate queue.
+	 */
+	public function queued(): QueuedWebhook
+	{
+		return new QueuedWebhook($this);
+	}
+
+	/**
 	 * @return array<string, string>
 	 */
 	public function __debugInfo(): array

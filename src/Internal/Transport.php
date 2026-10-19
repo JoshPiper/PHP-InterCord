@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Internet\InterCord\Internal;
 
+use GuzzleHttp\Psr7\MultipartStream;
+use Internet\InterCord\Attachment;
 use Internet\InterCord\Exception\DiscordApiException;
 use Internet\InterCord\Exception\InvalidArgumentException;
 use Internet\InterCord\Exception\RateLimitedException;
@@ -45,9 +47,10 @@ final class Transport
 	 * @param string $path Appended after the token, e.g. '/messages/123'.
 	 * @param array<string, string> $query
 	 * @param ?array<mixed> $body Encoded as JSON when given.
+	 * @param list<Attachment> $files Uploaded as files[n], with the body as payload_json, when given.
 	 * @return ?array<mixed> The decoded response body, or null when there wasn't one.
 	 */
-	public function send(string $method, string $path = '', array $query = [], ?array $body = null): ?array
+	public function send(string $method, string $path = '', array $query = [], ?array $body = null, array $files = []): ?array
 	{
 		$uri = self::BASE_URL . $this->id . '/' . $this->token . $path;
 		if ($query !== []) {
@@ -68,7 +71,12 @@ final class Transport
 
 			// Rebuilt on every attempt, since a sent body stream has already been read to the end.
 			$request = $this->requests->createRequest($method, $uri);
-			if ($json !== null) {
+			if ($files !== []) {
+				$multipart = self::multipart($json ?? '{}', $files);
+				$request = $request
+					->withHeader('Content-Type', 'multipart/form-data; boundary=' . $multipart->getBoundary())
+					->withBody($multipart);
+			} elseif ($json !== null) {
 				$request = $request
 					->withHeader('Content-Type', 'application/json')
 					->withBody($this->streams->createStream($json));
@@ -126,6 +134,19 @@ final class Transport
 
 			return $data;
 		}
+	}
+
+	/**
+	 * @param list<Attachment> $files
+	 */
+	private static function multipart(string $json, array $files): MultipartStream
+	{
+		$elements = [['name' => 'payload_json', 'contents' => $json, 'headers' => ['Content-Type' => 'application/json']]];
+		foreach ($files as $index => $file) {
+			$elements[] = ['name' => "files[{$index}]", 'contents' => $file->open(), 'filename' => $file->filename];
+		}
+
+		return new MultipartStream($elements);
 	}
 
 	private function waitForBucket(): void

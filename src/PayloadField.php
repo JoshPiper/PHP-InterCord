@@ -11,4 +11,6 @@ enum PayloadField
 {
 	case Content;
 	case Embeds;
+	/** Every existing attachment. Files added to the same edit are still uploaded. */
+	case Attachments;
 }

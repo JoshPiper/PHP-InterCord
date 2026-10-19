@@ -66,6 +66,47 @@ final class FakeDiscord
 		return $entry['request'];
 	}
 
+	/**
+	 * Split a multipart/form-data request into its parts, keyed by field name.
+	 *
+	 * @return array<string, array{filename: ?string, type: ?string, body: string}>
+	 */
+	public function parts(int $index = 0): array
+	{
+		$request = $this->request($index);
+		if (preg_match('/^multipart\/form-data; boundary=(.+)$/', $request->getHeaderLine('Content-Type'), $matches) !== 1) {
+			throw new LogicException("Request #{$index} isn't multipart/form-data.");
+		}
+
+		$parts = [];
+		$chunks = explode('--' . $matches[1], (string) $request->getBody());
+		foreach (array_slice($chunks, 1, -1) as $chunk) {
+			[$head, $body] = explode("\r\n\r\n", substr($chunk, 2), 2);
+			preg_match('/name="([^"]+)"/', $head, $name);
+			preg_match('/filename="([^"]+)"/', $head, $filename);
+			preg_match('/Content-Type: (.+)/i', $head, $type);
+			$parts[$name[1] ?? ''] = [
+				'filename' => $filename[1] ?? null,
+				'type' => isset($type[1]) ? trim($type[1]) : null,
+				'body' => substr($body, 0, -2),
+			];
+		}
+
+		return $parts;
+	}
+
+	/**
+	 * The JSON body of a request, whether it was sent plain or as multipart's payload_json.
+	 */
+	public function sentJson(int $index = 0): mixed
+	{
+		$isMultipart = str_starts_with($this->request($index)->getHeaderLine('Content-Type'), 'multipart/');
+
+		return $isMultipart
+			? json_decode($this->parts($index)['payload_json']['body'] ?? '', true, 512, JSON_THROW_ON_ERROR)
+			: $this->body($index);
+	}
+
 	public function body(int $index = 0): mixed
 	{
 		return json_decode((string) $this->request($index)->getBody(), true, 512, JSON_THROW_ON_ERROR);

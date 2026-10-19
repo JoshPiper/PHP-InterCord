@@ -19,6 +19,8 @@ final class PayloadTest extends TestCase
 		yield 'string' => ['hello', 'hello'];
 		yield 'int' => [4321, '4321'];
 		yield 'float' => [1.5, '1.5'];
+		yield 'the string zero' => ['0', '0'];
+		yield 'the number zero' => [0, '0'];
 	}
 
 	#[DataProvider('scalars')]

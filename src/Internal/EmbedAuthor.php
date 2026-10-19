@@ -28,7 +28,7 @@ final class EmbedAuthor implements JsonSerializable
 	 */
 	public function jsonSerialize(): array
 	{
-		return array_filter([
+		return Json::withoutEmpty([
 			'name' => $this->name,
 			'url' => $this->url,
 			'icon_url' => $this->iconUrl,

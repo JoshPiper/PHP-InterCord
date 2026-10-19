@@ -82,6 +82,32 @@ final class ComponentTest extends TestCase
 		self::assertSame([['type' => 1, 'components' => [$button]]], $payload->jsonSerialize()['components'] ?? null);
 	}
 
+	public function testRawComponentsCountTheirNestedComponents(): void
+	{
+		$section = new RawComponent([
+			'type' => 9,
+			'components' => [['type' => 10, 'content' => 'a'], ['type' => 10, 'content' => 'b']],
+			'accessory' => ['type' => 11, 'media' => ['url' => 'https://example.com/a.png']],
+		]);
+
+		self::assertSame(4, $section->componentCount());
+		self::assertSame(1, (new RawComponent(['type' => 10, 'content' => 'x']))->componentCount());
+	}
+
+	public function testARawV2ComponentSetsTheFlag(): void
+	{
+		$body = (new Payload())->addComponent(new RawComponent(['type' => 10, 'content' => 'x']))->toExecuteBody(false);
+
+		self::assertSame(1 << 15, $body['flags'] ?? null);
+	}
+
+	public function testARawClassicComponentDoesNot(): void
+	{
+		$body = (new Payload())->setContent('x')->addComponent(new RawComponent(['type' => 1, 'components' => []]))->toExecuteBody(false);
+
+		self::assertArrayNotHasKey('flags', $body);
+	}
+
 	/**
 	 * @return iterable<string, array{callable(): mixed}>
 	 */

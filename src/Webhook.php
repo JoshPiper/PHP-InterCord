@@ -10,6 +10,7 @@ use Internet\InterCord\Exception\InvalidArgumentException;
 use Internet\InterCord\Exception\InvalidWebhookUrlException;
 use Internet\InterCord\Internal\RealSleeper;
 use Internet\InterCord\Internal\Transport;
+use LogicException;
 use Psr\Http\Client\ClientInterface;
 
 /**
@@ -122,7 +123,7 @@ final class Webhook
 			'POST',
 			query: ['wait' => 'true'] + self::threadQuery($thread),
 			body: Payload::from($content, $username, $avatar)->jsonSerialize(),
-		), $thread);
+		), $thread, $this);
 	}
 
 	/**
@@ -138,6 +139,7 @@ final class Webhook
 		return Message::fromResponse(
 			$this->transport->send('GET', self::messagePath($message), self::threadQuery($thread)),
 			$thread,
+			$this,
 		);
 	}
 
@@ -160,7 +162,7 @@ final class Webhook
 			self::messagePath($message),
 			self::threadQuery($thread),
 			Payload::from($content)->toEditBody(),
-		), $thread);
+		), $thread, $this);
 	}
 
 	/**
@@ -180,6 +182,16 @@ final class Webhook
 	public function __debugInfo(): array
 	{
 		return ['id' => $this->id->value, 'token' => '[redacted]'];
+	}
+
+	/**
+	 * A webhook is a credential. Store its URL somewhere secret and rebuild it with fromUrl() instead.
+	 *
+	 * @return never
+	 */
+	public function __serialize(): array
+	{
+		throw new LogicException('Webhooks hold their token and refuse to be serialised; store the URL securely and use Webhook::fromUrl().');
 	}
 
 	private static function messagePath(Snowflake|string|Message $message): string

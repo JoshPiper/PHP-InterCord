@@ -96,6 +96,21 @@ final class Webhook
 	}
 
 	/**
+	 * Execute the webhook and wait for Discord to confirm, returning the message it created.
+	 *
+	 * @param array<int, string|int|float|RichEmbed>|string|int|float|RichEmbed|Payload $content
+	 * @throws Exception\InterCordException
+	 */
+	public function executeAndWait(array|string|int|float|RichEmbed|Payload $content, string $username = '', string $avatar = ''): Message
+	{
+		return Message::fromResponse($this->transport->send(
+			'POST',
+			query: ['wait' => 'true'],
+			body: Payload::from($content, $username, $avatar)->jsonSerialize(),
+		));
+	}
+
+	/**
 	 * @return array<string, string>
 	 */
 	public function __debugInfo(): array

@@ -81,6 +81,7 @@ final class RichEmbed implements JsonSerializable
 	 * Sets the colour of the embed's side bar.
 	 *
 	 * @param int|string|Color $color A decimal number, a hex code (#RRGGBB or #RGB), or a Color.
+	 *                                A string of only digits is read as decimal, so prefix hex codes with #.
 	 * @throws InvalidColorException
 	 */
 	public function setColor(int|string|Color $color): self

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Internet\InterCord\Tests;
 
+use Internet\InterCord\Exception\InvalidColorException;
 use Internet\InterCord\Internal\Color;
 use Internet\InterCord\RichEmbed;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -52,5 +53,39 @@ final class ColorTest extends TestCase
 	public function testBlackIsLeftOut(int|string|Color $colour): void
 	{
 		self::assertArrayNotHasKey('color', (new RichEmbed())->setColor($colour)->jsonSerialize());
+	}
+
+	/**
+	 * @return iterable<string, array{int|string}>
+	 */
+	public static function outOfRange(): iterable
+	{
+		yield 'above white' => [0x1000000];
+		yield 'negative' => [-1];
+		yield 'above white as a string' => ['16777216'];
+	}
+
+	#[DataProvider('outOfRange')]
+	public function testOutOfRangeNumbersAreRejected(int|string $colour): void
+	{
+		$this->expectException(InvalidColorException::class);
+		(new RichEmbed())->setColor($colour);
+	}
+
+	/**
+	 * @return iterable<string, array{int, int, int}>
+	 */
+	public static function outOfRangeChannels(): iterable
+	{
+		yield 'red above 255' => [256, 0, 0];
+		yield 'green negative' => [0, -1, 0];
+		yield 'blue above 255' => [0, 0, 300];
+	}
+
+	#[DataProvider('outOfRangeChannels')]
+	public function testOutOfRangeChannelsAreRejected(int $r, int $g, int $b): void
+	{
+		$this->expectException(InvalidColorException::class);
+		new Color($r, $g, $b);
 	}
 }

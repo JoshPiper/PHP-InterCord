@@ -6,6 +6,7 @@ namespace Internet\InterCord;
 
 use DateTime;
 use DateTimeInterface;
+use Internet\InterCord\Exception\InvalidColorException;
 use Internet\InterCord\Internal\Color;
 use Internet\InterCord\Internal\EmbedAuthor;
 use Internet\InterCord\Internal\EmbedField;
@@ -80,6 +81,7 @@ final class RichEmbed implements JsonSerializable
 	 * Sets the colour of the embed's side bar.
 	 *
 	 * @param int|string|Color $color A decimal number, a hex code (#RRGGBB or #RGB), or a Color.
+	 * @throws InvalidColorException
 	 */
 	public function setColor(int|string|Color $color): self
 	{

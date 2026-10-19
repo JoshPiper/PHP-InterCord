@@ -8,7 +8,6 @@ use Countable;
 use Internet\InterCord\Exception\InterCordException;
 use Internet\InterCord\Exception\RateLimitedException;
 use Internet\InterCord\Exception\TransportException;
-use Internet\InterCord\Internal\Payload;
 
 /**
  * Queues payloads for a webhook and sends them in order.

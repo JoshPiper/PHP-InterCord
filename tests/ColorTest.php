@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Internet\InterCord\Tests;
 
+use Internet\InterCord\Color;
 use Internet\InterCord\Exception\InvalidColorException;
-use Internet\InterCord\Internal\Color;
 use Internet\InterCord\RichEmbed;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Internet\InterCord\Internal;
+namespace Internet\InterCord;
 
-use Internet\InterCord\RichEmbed;
+use Internet\InterCord\Internal\Json;
 use JsonSerializable;
 
 /**

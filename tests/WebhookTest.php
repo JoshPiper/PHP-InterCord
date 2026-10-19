@@ -10,7 +10,7 @@ use GuzzleHttp\Psr7\Response;
 use Internet\InterCord\Exception\DiscordApiException;
 use Internet\InterCord\Exception\InvalidArgumentException;
 use Internet\InterCord\Exception\TransportException;
-use Internet\InterCord\Internal\Payload;
+use Internet\InterCord\Payload;
 use Internet\InterCord\RichEmbed;
 use Internet\InterCord\Tests\Support\FakeDiscord;
 use PHPUnit\Framework\TestCase;

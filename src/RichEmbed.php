@@ -8,7 +8,6 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Internet\InterCord\Exception\InvalidColorException;
 use Internet\InterCord\Exception\InvalidTimestampException;
-use Internet\InterCord\Internal\Color;
 use Internet\InterCord\Internal\EmbedAuthor;
 use Internet\InterCord\Internal\EmbedField;
 use Internet\InterCord\Internal\EmbedFooter;

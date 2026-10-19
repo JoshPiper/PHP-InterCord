@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Internet\InterCord;
 
+use Internet\InterCord\Exception\InvalidArgumentException;
 use Internet\InterCord\Internal\Json;
 use JsonSerializable;
 
@@ -90,6 +91,27 @@ final class Payload implements JsonSerializable
 	{
 		$this->embeds[] = $embed;
 		return $this;
+	}
+
+	/**
+	 * The body for editing an existing message with this payload.
+	 *
+	 * @internal
+	 * @return array<string, mixed>
+	 * @throws InvalidArgumentException When the payload sets something Discord can't change after sending.
+	 */
+	public function toEditBody(): array
+	{
+		foreach (['username' => $this->username, 'avatar' => $this->avatar] as $field => $value) {
+			if ($value !== null && $value !== '') {
+				throw new InvalidArgumentException("A message's {$field} can't be changed by editing it.");
+			}
+		}
+		if ($this->tts !== null) {
+			throw new InvalidArgumentException("A message's TTS setting can't be changed by editing it.");
+		}
+
+		return $this->jsonSerialize();
 	}
 
 	/**

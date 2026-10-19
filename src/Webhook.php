@@ -111,10 +111,50 @@ final class Webhook
 	}
 
 	/**
+	 * Fetch a message this webhook sent.
+	 *
+	 * @throws Exception\InterCordException
+	 */
+	public function getMessage(Snowflake|string|Message $message): Message
+	{
+		return Message::fromResponse($this->transport->send('GET', self::messagePath($message)));
+	}
+
+	/**
+	 * Edit a message this webhook sent. Only what $content sets is changed; everything else is left as it is.
+	 *
+	 * @param array<int, string|int|float|RichEmbed>|string|int|float|RichEmbed|Payload $content
+	 * @throws Exception\InterCordException
+	 */
+	public function editMessage(Snowflake|string|Message $message, array|string|int|float|RichEmbed|Payload $content): Message
+	{
+		return Message::fromResponse($this->transport->send(
+			'PATCH',
+			self::messagePath($message),
+			body: Payload::from($content)->toEditBody(),
+		));
+	}
+
+	/**
+	 * Delete a message this webhook sent.
+	 *
+	 * @throws Exception\InterCordException
+	 */
+	public function deleteMessage(Snowflake|string|Message $message): void
+	{
+		$this->transport->send('DELETE', self::messagePath($message));
+	}
+
+	/**
 	 * @return array<string, string>
 	 */
 	public function __debugInfo(): array
 	{
 		return ['id' => $this->id->value, 'token' => '[redacted]'];
+	}
+
+	private static function messagePath(Snowflake|string|Message $message): string
+	{
+		return '/messages/' . ($message instanceof Message ? $message->id : Snowflake::from($message));
 	}
 }

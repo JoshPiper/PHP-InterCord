@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Internet\InterCord;
 
-use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Internet\InterCord\Exception\InvalidColorException;
+use Internet\InterCord\Exception\InvalidTimestampException;
 use Internet\InterCord\Internal\Color;
 use Internet\InterCord\Internal\EmbedAuthor;
 use Internet\InterCord\Internal\EmbedField;
@@ -22,7 +23,7 @@ final class RichEmbed implements JsonSerializable
 	private ?string $title = null;
 	private ?string $description = null;
 	private ?string $url = null;
-	private DateTimeInterface|false|null $timestamp = null;
+	private ?DateTimeImmutable $timestamp = null;
 	private ?Color $color = null;
 	private ?EmbedFooter $footer = null;
 	private ?EmbedImage $image = null;
@@ -62,18 +63,30 @@ final class RichEmbed implements JsonSerializable
 	 * Sets the timestamp of the embed.
 	 *
 	 * @param int|string|DateTimeInterface $timestamp A Unix timestamp, a DateTimeInterface, or a string in $format.
-	 * @param string $format A DateTime::createFromFormat() format, for string timestamps.
+	 * @param string $format A DateTimeImmutable::createFromFormat() format, for string timestamps.
+	 * @throws InvalidTimestampException
 	 */
 	public function setTimestamp(int|string|DateTimeInterface $timestamp, string $format = ''): self
 	{
 		if ($timestamp instanceof DateTimeInterface) {
-			$this->timestamp = clone $timestamp;
-		} elseif (is_numeric($timestamp)) {
-			$this->timestamp = DateTime::createFromFormat('U', (string) $timestamp);
-		} elseif ($format !== '') {
-			$this->timestamp = DateTime::createFromFormat($format, $timestamp);
+			$this->timestamp = DateTimeImmutable::createFromInterface($timestamp);
+			return $this;
 		}
 
+		if ($format === '') {
+			if (!is_numeric($timestamp)) {
+				throw new InvalidTimestampException("'{$timestamp}' isn't a Unix timestamp; pass a format to parse other strings.");
+			}
+			$format = 'U';
+		}
+
+		$parsed = DateTimeImmutable::createFromFormat($format, (string) $timestamp);
+		// createFromFormat() rolls impossible dates over (30 February becomes 2 March) and only reports it as a warning.
+		if ($parsed === false || DateTimeImmutable::getLastErrors() !== false) {
+			throw new InvalidTimestampException("'{$timestamp}' doesn't match the timestamp format '{$format}'.");
+		}
+
+		$this->timestamp = $parsed;
 		return $this;
 	}
 

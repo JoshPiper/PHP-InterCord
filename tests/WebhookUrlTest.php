@@ -36,7 +36,7 @@ final class WebhookUrlTest extends TestCase
 		$webhook->execute('hello');
 
 		self::assertSame(FakeDiscord::ENDPOINT, (string) $discord->request()->getUri());
-		self::assertSame(FakeDiscord::ID, $webhook->id);
+		self::assertSame(FakeDiscord::ID, $webhook->id->value);
 	}
 
 	/**

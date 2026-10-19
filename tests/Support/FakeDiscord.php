@@ -80,6 +80,38 @@ final class FakeDiscord
 		return new Response($status, ['Content-Type' => 'application/json'] + $headers, json_encode($body, JSON_THROW_ON_ERROR));
 	}
 
+	public const MESSAGE_ID = '1300000000000000001';
+	public const CHANNEL_ID = '1200000000000000002';
+
+	/**
+	 * A message object shaped like Discord's response to a webhook execute or edit.
+	 *
+	 * @param array<string, mixed> $overrides
+	 * @return array<string, mixed>
+	 */
+	public static function message(array $overrides = []): array
+	{
+		return $overrides + [
+			'id' => self::MESSAGE_ID,
+			'type' => 0,
+			'content' => 'hello',
+			'channel_id' => self::CHANNEL_ID,
+			'author' => ['id' => self::ID, 'username' => 'Captain Hook', 'bot' => true],
+			'attachments' => [],
+			'embeds' => [],
+			'mentions' => [],
+			'mention_roles' => [],
+			'pinned' => false,
+			'mention_everyone' => false,
+			'tts' => false,
+			'timestamp' => '2026-10-19T12:00:00.123000+00:00',
+			'edited_timestamp' => null,
+			'flags' => 0,
+			'components' => [],
+			'webhook_id' => self::ID,
+		];
+	}
+
 	/**
 	 * @param array<string, string> $headers
 	 */

@@ -31,6 +31,21 @@ final class Color implements JsonSerializable
 	}
 
 	/**
+	 * Read any of the forms RichEmbed::setColor() accepts: a decimal number, a hex code, or a Color.
+	 * A string of only digits is read as decimal, so prefix hex codes with #.
+	 *
+	 * @throws InvalidColorException
+	 */
+	public static function from(int|string|self $color): self
+	{
+		if ($color instanceof self) {
+			return $color;
+		}
+
+		return is_numeric($color) ? self::fromDecimal((int) $color) : self::fromHex($color);
+	}
+
+	/**
 	 * Create a colour from a hex triplet (#RRGGBB) or shorthand (#RGB). The # is optional.
 	 *
 	 * @throws InvalidColorException

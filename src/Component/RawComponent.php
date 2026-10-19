@@ -11,7 +11,7 @@ use Internet\InterCord\Exception\InvalidArgumentException;
  * buttons and select menus, which only webhooks owned by an application can send (and only that application can
  * answer).
  */
-final class RawComponent implements TopLevelComponent, ActionRowComponent
+final class RawComponent implements TopLevelComponent, ActionRowComponent, ContainerComponent, SectionAccessory
 {
 	/** Component types that only render with the IS_COMPONENTS_V2 flag. */
 	private const V2_TYPES = [9, 10, 11, 12, 13, 14, 17];

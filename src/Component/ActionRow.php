@@ -9,7 +9,7 @@ use Internet\InterCord\Exception\InvalidArgumentException;
 /**
  * A horizontal row of up to five buttons.
  */
-final class ActionRow implements TopLevelComponent
+final class ActionRow implements TopLevelComponent, ContainerComponent
 {
 	private const MAX_ITEMS = 5;
 

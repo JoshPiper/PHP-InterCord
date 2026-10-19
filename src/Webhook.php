@@ -103,7 +103,7 @@ final class Webhook
 
 		$this->transport->send(
 			'POST',
-			query: self::threadQuery($thread),
+			query: self::threadQuery($thread) + self::componentsQuery($payload),
 			body: $payload->toExecuteBody($thread !== null),
 			files: $payload->files(),
 		);
@@ -126,7 +126,7 @@ final class Webhook
 
 		$message = Message::fromResponse($this->transport->send(
 			'POST',
-			query: ['wait' => 'true'] + self::threadQuery($thread),
+			query: ['wait' => 'true'] + self::threadQuery($thread) + self::componentsQuery($payload),
 			body: $payload->toExecuteBody($thread !== null),
 			files: $payload->files(),
 		), $thread, $this);
@@ -173,7 +173,7 @@ final class Webhook
 		return Message::fromResponse($this->transport->send(
 			'PATCH',
 			self::messagePath($message),
-			self::threadQuery($thread),
+			self::threadQuery($thread) + self::componentsQuery($payload),
 			$payload->toEditBody($existing),
 			$payload->files(),
 		), $thread, $this);
@@ -231,6 +231,16 @@ final class Webhook
 		}
 
 		return $message instanceof Message ? $message->threadId : null;
+	}
+
+	/**
+	 * Discord ignores a webhook's components unless asked to read them.
+	 *
+	 * @return array<string, string>
+	 */
+	private static function componentsQuery(Payload $payload): array
+	{
+		return $payload->hasComponents() ? ['with_components' => 'true'] : [];
 	}
 
 	/**

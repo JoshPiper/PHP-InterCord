@@ -21,6 +21,8 @@ final class Payload implements JsonSerializable
 	/** @var list<RichEmbed> */
 	private array $embeds = [];
 	private ?AllowedMentions $allowedMentions = null;
+	/** @var array<string, PayloadField> Fields an edit should remove, keyed by case name. */
+	private array $cleared = [];
 	private ?string $threadName = null;
 	/** @var list<Snowflake> */
 	private array $appliedTags = [];
@@ -58,6 +60,7 @@ final class Payload implements JsonSerializable
 	public function setContent(string $content): self
 	{
 		$this->content = $content;
+		unset($this->cleared[PayloadField::Content->name]);
 		return $this;
 	}
 
@@ -94,6 +97,26 @@ final class Payload implements JsonSerializable
 	public function addEmbed(RichEmbed $embed): self
 	{
 		$this->embeds[] = $embed;
+		unset($this->cleared[PayloadField::Embeds->name]);
+		return $this;
+	}
+
+	/**
+	 * Remove these parts of the message when editing it. Without this, an edit leaves anything it doesn't set alone.
+	 *
+	 * Setting a field again afterwards takes it back off the list; clearing it after setting it discards what was
+	 * set. Only applies to edits: sending a cleared payload as a new message throws.
+	 */
+	public function clear(PayloadField ...$fields): self
+	{
+		foreach ($fields as $field) {
+			match ($field) {
+				PayloadField::Content => $this->content = null,
+				PayloadField::Embeds => $this->embeds = [],
+			};
+			$this->cleared[$field->name] = $field;
+		}
+
 		return $this;
 	}
 
@@ -158,6 +181,9 @@ final class Payload implements JsonSerializable
 		if ($this->appliedTags !== [] && $this->threadName === null) {
 			throw new InvalidArgumentException('Tags can only be applied when starting a new post with setThreadName().');
 		}
+		if ($this->cleared !== []) {
+			throw new InvalidArgumentException('clear() only applies when editing a message; a new message has nothing to clear.');
+		}
 
 		return $this->jsonSerialize();
 	}
@@ -183,7 +209,15 @@ final class Payload implements JsonSerializable
 			throw new InvalidArgumentException('A post can only be started, and tagged, when the message is first sent.');
 		}
 
-		return $this->jsonSerialize();
+		$body = $this->jsonSerialize();
+		foreach ($this->cleared as $field) {
+			match ($field) {
+				PayloadField::Content => $body['content'] = null,
+				PayloadField::Embeds => $body['embeds'] = [],
+			};
+		}
+
+		return $body;
 	}
 
 	/**

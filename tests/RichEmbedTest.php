@@ -6,6 +6,7 @@ namespace Internet\InterCord\Tests;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use Internet\InterCord\Exception\InvalidTimestampException;
 use Internet\InterCord\RichEmbed;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -94,6 +95,24 @@ final class RichEmbedTest extends TestCase
 		$embed = (new RichEmbed())->setTimestamp($timestamp, $format);
 
 		self::assertSame($expected, $embed->jsonSerialize()['timestamp']);
+	}
+
+	/**
+	 * @return iterable<string, array{string, string}>
+	 */
+	public static function unparseableTimestamps(): iterable
+	{
+		yield 'does not match the format' => ['yesterday', 'Y-m-d'];
+		yield 'out of range for the format' => ['2009-02-30', 'Y-m-d'];
+		yield 'fractional unix time' => ['1.5', ''];
+		yield 'a string without a format' => ['2009-02-15', ''];
+	}
+
+	#[DataProvider('unparseableTimestamps')]
+	public function testUnparseableTimestampsAreRejected(string $timestamp, string $format): void
+	{
+		$this->expectException(InvalidTimestampException::class);
+		(new RichEmbed())->setTimestamp($timestamp, $format);
 	}
 
 	public function testDateTimeIsCopied(): void

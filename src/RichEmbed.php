@@ -179,7 +179,7 @@ final class RichEmbed implements JsonSerializable
 			'image' => $this->image?->jsonSerialize(),
 			'thumbnail' => $this->thumbnail?->jsonSerialize(),
 			'author' => $this->author?->jsonSerialize(),
-			'fields' => array_map(static fn (EmbedField $field): array => $field->jsonSerialize(), $this->fields),
+			'fields' => array_map(static fn(EmbedField $field): array => $field->jsonSerialize(), $this->fields),
 		]);
 	}
 }

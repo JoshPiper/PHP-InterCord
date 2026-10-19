@@ -20,8 +20,7 @@ final class EmbedAuthor implements JsonSerializable
 		private readonly string $name = '',
 		private readonly string $url = '',
 		private readonly string $iconUrl = '',
-	) {
-	}
+	) {}
 
 	/**
 	 * @return array<string, string>

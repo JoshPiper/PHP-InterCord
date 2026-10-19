@@ -23,8 +23,7 @@ final class Webhook
 	private function __construct(
 		private readonly Transport $transport,
 		public readonly string $id,
-	) {
-	}
+	) {}
 
 	/**
 	 * @param string $url The webhook URL from Discord's channel integration settings.

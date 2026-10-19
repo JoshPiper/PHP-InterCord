@@ -15,8 +15,7 @@ final class EmbedField implements JsonSerializable
 		private readonly string $name = '',
 		private readonly string $value = '',
 		private readonly bool $inline = false,
-	) {
-	}
+	) {}
 
 	/**
 	 * @return array<string, string|bool>

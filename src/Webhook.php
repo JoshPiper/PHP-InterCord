@@ -1,101 +1,109 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Internet\InterCord;
 
-use Exception;
 use GuzzleHttp\Client;
-use InvalidArgumentException;
+use GuzzleHttp\Psr7\HttpFactory;
+use Internet\InterCord\Exception\InvalidArgumentException;
+use Internet\InterCord\Exception\InvalidWebhookUrlException;
 use Internet\InterCord\Internal\Payload;
-use GuzzleHttp\Exception\ClientException;
+use Internet\InterCord\Internal\RealSleeper;
+use Internet\InterCord\Internal\Transport;
+use Psr\Http\Client\ClientInterface;
 
 /**
- * The discord webhook class represents a webhook endpoint, and contains functions for sending payloads to it.
- * Class DiscordWebhook
- * @package Internet\InterCord
+ * A single Discord webhook endpoint.
  */
-class Webhook extends Client {
-	protected const BASE_URL = 'https://discordapp.com/api/webhooks/';
-	/**
-	 * Webhook constructor.
-	 * @param string $url Either the full webhook URL or the webhook ID (assuming webhook token is not empty)
-	 * @param string $token The webhook token.
-	 * @throws InvalidArgumentException
-	 */
-    public function __construct(string $url, string $token = ''){
-    	if (!empty($token)){
-    		if (is_numeric($url)){
-    			$uri = static::BASE_URL . "{$url}/{$token}";
-			} else {
-    			throw new InvalidArgumentException('Non-numeric ID passed.');
-			}
-		} else {
-    		$uri = $url;
-		}
+final class Webhook
+{
+	private const URL_PATTERN = '~^https://(?:(?:canary|ptb)\.)?discord(?:app)?\.com/api(?:/v\d+)?/webhooks/(\d+)/([\w.-]+)/?$~';
 
-		parent::__construct([
-			'base_uri' => $uri,
-			'headers' => [
-				'Content-Type' => 'application/json'
-			]
-		]);
-    }
-
-	/**
-	 * Create a payload object from a set of content.
-	 * @param $content
-	 * @param string $username
-	 * @param string $avatar
-	 * @return Payload
-	 */
-    public static function createPayload($content, string $username = '', string $avatar = ''): Payload {
-    	if ($content instanceof Payload){
-    		return $content;
-		}
-
-		$payload = new Payload();
-		$payload->setUsername($username);
-		$payload->setAvatar($avatar);
-
-		if (!is_array($content)){$content = [$content];}
-		foreach ($content as $argument){
-			if ($argument instanceof RichEmbed){
-				$payload->addEmbed($argument);
-			} elseif (is_scalar($argument)){
-				$payload->setContent((string)$argument);
-			}
-		}
-
-		return $payload;
+	private function __construct(
+		private readonly Transport $transport,
+		public readonly string $id,
+	) {
 	}
 
 	/**
-	 * Execute a webhook with either an array of strings/embeds, a string, an embed or a payload object.
-	 * @param $content array|string|RichEmbed|Payload
-	 * @param string $username Username override to set on the payload. Only works if content isn't a payload.
-	 * @param string $avatar Avatar override to set. Only works if content isn't a payload.
-	 * @param boolean $await If the webhook should await discord's response.
-	 * @return Object|void
-	 * @throws Exception
+	 * @param string $url The webhook URL from Discord's channel integration settings.
+	 * @param ?ClientInterface $client Any PSR-18 client. Defaults to Guzzle.
+	 * @param ?Sleeper $sleeper Waits out rate limits. Defaults to usleep().
+	 * @param int $maxRetries How many times to retry a rate limited request before giving up.
+	 * @throws InvalidWebhookUrlException
 	 */
-    public function execute($content, string $username = '', string $avatar = '', bool $await = false): ?Object {
-		$payload = static::createPayload($content, $username, $avatar);
-
-		$response = $this->post('', [
-			'body' => json_encode($payload),
-			'query' => ['wait' => $await]
-		]);
-
-		$limit = $response->getHeader('X-RateLimit-Limit')[0];
-    	$remaining = $response->getHeader('X-RateLimit-Remaining')[0];
-		if (((int)$remaining / (int)$limit) <= 0.5){
-			$wait = $response->getHeader('X-RateLimit-Reset-After')[0];
-			sleep((int)$wait);
+	public static function fromUrl(
+		#[\SensitiveParameter]
+		string $url,
+		?ClientInterface $client = null,
+		?Sleeper $sleeper = null,
+		int $maxRetries = 3,
+	): self {
+		if (preg_match(self::URL_PATTERN, $url, $matches) !== 1) {
+			// The URL holds the token, so it stays out of the message.
+			throw new InvalidWebhookUrlException('Not a Discord webhook URL; expected https://discord.com/api/webhooks/{id}/{token}.');
 		}
 
-    	if (!$await){
-    		return null;
-		} else {
-			return json_decode($response->getBody()->getContents(), false);
+		return self::fromCredentials($matches[1], $matches[2], $client, $sleeper, $maxRetries);
+	}
+
+	/**
+	 * @see fromUrl() for the optional parameters.
+	 * @throws InvalidArgumentException
+	 */
+	public static function fromCredentials(
+		string $id,
+		#[\SensitiveParameter]
+		string $token,
+		?ClientInterface $client = null,
+		?Sleeper $sleeper = null,
+		int $maxRetries = 3,
+	): self {
+		if (preg_match('/^\d+$/', $id) !== 1) {
+			throw new InvalidArgumentException('Webhook ID must be numeric.');
 		}
+		if (preg_match('/^[\w.-]+$/', $token) !== 1) {
+			throw new InvalidArgumentException('Webhook token is empty or contains invalid characters.');
+		}
+		if ($maxRetries < 0) {
+			throw new InvalidArgumentException('maxRetries cannot be negative.');
+		}
+
+		$factory = new HttpFactory();
+
+		return new self(
+			new Transport(
+				$client ?? new Client(['connect_timeout' => 10, 'timeout' => 30]),
+				$factory,
+				$factory,
+				$sleeper ?? new RealSleeper(),
+				$id,
+				$token,
+				$maxRetries,
+			),
+			$id,
+		);
+	}
+
+	/**
+	 * Execute the webhook with a string, an embed, an array of strings and embeds, or a prepared payload.
+	 *
+	 * @param array<int, string|int|float|RichEmbed>|string|int|float|RichEmbed|Payload $content
+	 * @param string $username Username override. Ignored when $content is a Payload.
+	 * @param string $avatar Avatar URL override. Ignored when $content is a Payload.
+	 * @throws Exception\InterCordException
+	 */
+	public function execute(array|string|int|float|RichEmbed|Payload $content, string $username = '', string $avatar = ''): void
+	{
+		$this->transport->send('POST', body: Payload::from($content, $username, $avatar)->jsonSerialize());
+	}
+
+	/**
+	 * @return array<string, string>
+	 */
+	public function __debugInfo(): array
+	{
+		return ['id' => $this->id, 'token' => '[redacted]'];
 	}
 }

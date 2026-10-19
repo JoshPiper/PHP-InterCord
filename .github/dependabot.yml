@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: composer
+    directory: "/"
+    schedule:
+      interval: weekly
+    # No lock file in a library, so only widen a constraint when a release
+    # falls outside it, rather than bumping floors on every patch.
+    versioning-strategy: increase-if-necessary
+    # release-please reads commit types: widening a runtime constraint
+    # changes what consumers resolve, so it's a fix; dev tooling isn't.
+    commit-message:
+      prefix: fix
+      prefix-development: chore
+      include: scope
+    groups:
+      development:
+        dependency-type: development
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci

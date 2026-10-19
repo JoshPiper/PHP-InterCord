@@ -1,0 +1,97 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: >-
+          Existing release tag to (re)sync to Packagist, e.g. 3.0.0.
+          The recovery path when the Packagist job fails after the tag
+          and GitHub release already exist; both of its steps are safe
+          to repeat.
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: release-please-${{ github.ref }}
+
+jobs:
+  # Maintains a rolling release PR from conventional commits. Nothing releases
+  # until that PR is merged, so "not ready" is simply "don't merge it yet".
+  # On merge of the release PR, the same step tags the commit and publishes
+  # the GitHub release.
+  release-please:
+    name: Release PR / tag
+    if: github.event_name == 'push' && github.repository_owner == 'JoshPiper'
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release-please.outputs.release_created }}
+      version: ${{ steps.release-please.outputs.version }}
+    steps:
+      - name: Run release-please
+        id: release-please
+        uses: googleapis/release-please-action@v5
+        with:
+          # A PAT rather than GITHUB_TOKEN: GitHub suppresses workflow runs
+          # triggered by GITHUB_TOKEN, so CI would never run on the release PR.
+          # Deliberately no fallback to GITHUB_TOKEN, so a missing or expired
+          # PAT fails this job instead of quietly opening an untested PR.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # Packagist's GitHub hook should pick a new tag up on its own. This makes
+  # that explicit, then fails loudly if the version never appears, rather
+  # than leaving a release that composer can't install.
+  packagist:
+    name: Sync and verify Packagist
+    needs: release-please
+    if: >-
+      always() && github.repository_owner == 'JoshPiper' &&
+      (needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    env:
+      PACKAGE: internet/intercord
+      REPOSITORY_URL: https://github.com/JoshPiper/PHP-InterCord
+      # Passed through env, never interpolated into the script, so a crafted
+      # dispatch input can't inject shell.
+      VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || needs.release-please.outputs.version }}
+    steps:
+      - name: Validate version
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$VERSION' is not a release version (expected e.g. 3.0.0)."
+            exit 1
+          fi
+
+      - name: Request Packagist update
+        env:
+          PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+          PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
+        run: |
+          response=$(curl --fail-with-body -sS --retry 3 --retry-all-errors \
+            -X POST https://packagist.org/api/update-package \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${PACKAGIST_USERNAME}:${PACKAGIST_TOKEN}" \
+            -d "$(jq -cn --arg url "$REPOSITORY_URL" '{repository: $url}')")
+          echo "$response"
+          [ "$(jq -r '.status' <<< "$response")" = "success" ]
+
+      - name: Wait for version to appear
+        run: |
+          for attempt in $(seq 1 20); do
+            if curl -fsS "https://repo.packagist.org/p2/${PACKAGE}.json" \
+              | jq -e --arg pkg "$PACKAGE" --arg v "$VERSION" \
+                  '.packages[$pkg] | any(.version == $v)' > /dev/null; then
+              echo "${PACKAGE} ${VERSION} is live on Packagist."
+              exit 0
+            fi
+            echo "Attempt ${attempt}: ${VERSION} not visible yet."
+            sleep 30
+          done
+          echo "::error::${PACKAGE} ${VERSION} did not appear on Packagist within 10 minutes."
+          exit 1

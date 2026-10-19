@@ -98,10 +98,12 @@ final class Webhook
 		string $avatar = '',
 		Snowflake|string|null $threadId = null,
 	): void {
+		$thread = self::thread($threadId);
+
 		$this->transport->send(
 			'POST',
-			query: self::threadQuery(self::thread($threadId)),
-			body: Payload::from($content, $username, $avatar)->jsonSerialize(),
+			query: self::threadQuery($thread),
+			body: Payload::from($content, $username, $avatar)->toExecuteBody($thread !== null),
 		);
 	}
 
@@ -118,12 +120,16 @@ final class Webhook
 		Snowflake|string|null $threadId = null,
 	): Message {
 		$thread = self::thread($threadId);
+		$payload = Payload::from($content, $username, $avatar);
 
-		return Message::fromResponse($this->transport->send(
+		$message = Message::fromResponse($this->transport->send(
 			'POST',
 			query: ['wait' => 'true'] + self::threadQuery($thread),
-			body: Payload::from($content, $username, $avatar)->jsonSerialize(),
+			body: $payload->toExecuteBody($thread !== null),
 		), $thread, $this);
+
+		// A new forum or media post is a thread, and its first message's channel is that thread.
+		return $payload->startsThread() ? $message->inThread($message->channelId) : $message;
 	}
 
 	/**

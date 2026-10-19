@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Internet\InterCord\Tests;
 
-use Internet\InterCord\Internal\Payload;
+use Internet\InterCord\Payload;
 use Internet\InterCord\RichEmbed;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;

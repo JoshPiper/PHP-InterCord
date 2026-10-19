@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Internet\InterCord\Internal;
+namespace Internet\InterCord;
 
 use Internet\InterCord\Exception\InvalidColorException;
 use JsonSerializable;

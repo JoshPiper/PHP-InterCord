@@ -8,7 +8,6 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\HttpFactory;
 use Internet\InterCord\Exception\InvalidArgumentException;
 use Internet\InterCord\Exception\InvalidWebhookUrlException;
-use Internet\InterCord\Internal\Payload;
 use Internet\InterCord\Internal\RealSleeper;
 use Internet\InterCord\Internal\Transport;
 use Psr\Http\Client\ClientInterface;

@@ -2,6 +2,7 @@
     "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
     "bootstrap-sha": "15ccabdb415d536d7ee8864161b3997bbbf1ee36",
     "include-v-in-tag": false,
+    "include-component-in-tag": false,
     "packages": {
         ".": {
             "release-type": "php",

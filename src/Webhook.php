@@ -21,7 +21,7 @@ final class Webhook
 
 	private function __construct(
 		private readonly Transport $transport,
-		public readonly string $id,
+		public readonly Snowflake $id,
 	) {}
 
 	/**
@@ -51,16 +51,14 @@ final class Webhook
 	 * @throws InvalidArgumentException
 	 */
 	public static function fromCredentials(
-		string $id,
+		Snowflake|string $id,
 		#[\SensitiveParameter]
 		string $token,
 		?ClientInterface $client = null,
 		?Sleeper $sleeper = null,
 		int $maxRetries = 3,
 	): self {
-		if (preg_match('/^\d+$/', $id) !== 1) {
-			throw new InvalidArgumentException('Webhook ID must be numeric.');
-		}
+		$id = Snowflake::from($id);
 		if (preg_match('/^[\w.-]+$/', $token) !== 1) {
 			throw new InvalidArgumentException('Webhook token is empty or contains invalid characters.');
 		}
@@ -76,7 +74,7 @@ final class Webhook
 				$factory,
 				$factory,
 				$sleeper ?? new RealSleeper(),
-				$id,
+				$id->value,
 				$token,
 				$maxRetries,
 			),
@@ -102,6 +100,6 @@ final class Webhook
 	 */
 	public function __debugInfo(): array
 	{
-		return ['id' => $this->id, 'token' => '[redacted]'];
+		return ['id' => $this->id->value, 'token' => '[redacted]'];
 	}
 }

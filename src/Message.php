@@ -83,6 +83,23 @@ final class Message
 	}
 
 	/**
+	 * The IDs of this message's attachments, in order.
+	 *
+	 * @return list<Snowflake>
+	 */
+	public function attachmentIds(): array
+	{
+		$ids = [];
+		foreach ($this->attachments as $attachment) {
+			if (is_string($attachment['id'] ?? null)) {
+				$ids[] = Snowflake::from($attachment['id']);
+			}
+		}
+
+		return $ids;
+	}
+
+	/**
 	 * A copy of this message that knows the thread it lives in.
 	 *
 	 * @internal

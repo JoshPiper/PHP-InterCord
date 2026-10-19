@@ -99,11 +99,13 @@ final class Webhook
 		Snowflake|string|null $threadId = null,
 	): void {
 		$thread = self::thread($threadId);
+		$payload = Payload::from($content, $username, $avatar);
 
 		$this->transport->send(
 			'POST',
 			query: self::threadQuery($thread),
-			body: Payload::from($content, $username, $avatar)->toExecuteBody($thread !== null),
+			body: $payload->toExecuteBody($thread !== null),
+			files: $payload->files(),
 		);
 	}
 
@@ -126,6 +128,7 @@ final class Webhook
 			'POST',
 			query: ['wait' => 'true'] + self::threadQuery($thread),
 			body: $payload->toExecuteBody($thread !== null),
+			files: $payload->files(),
 		), $thread, $this);
 
 		// A new forum or media post is a thread, and its first message's channel is that thread.
@@ -152,6 +155,8 @@ final class Webhook
 	/**
 	 * Edit a message this webhook sent. Only what $content sets is changed; everything else is left as it is.
 	 *
+	 * Given a Message, new files are added alongside its existing attachments; see Payload::addAttachment().
+	 *
 	 * @param array<int, string|int|float|RichEmbed>|string|int|float|RichEmbed|Payload $content
 	 * @param Snowflake|string|null $threadId The thread the message is in. Defaults to the thread of a given Message.
 	 * @throws Exception\InterCordException
@@ -162,12 +167,15 @@ final class Webhook
 		Snowflake|string|null $threadId = null,
 	): Message {
 		$thread = self::thread($threadId, $message);
+		$payload = Payload::from($content);
+		$existing = $message instanceof Message ? $message->attachmentIds() : null;
 
 		return Message::fromResponse($this->transport->send(
 			'PATCH',
 			self::messagePath($message),
 			self::threadQuery($thread),
-			Payload::from($content)->toEditBody(),
+			$payload->toEditBody($existing),
+			$payload->files(),
 		), $thread, $this);
 	}
 

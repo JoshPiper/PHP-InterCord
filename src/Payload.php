@@ -16,6 +16,7 @@ final class Payload implements JsonSerializable
 {
 	private const SUPPRESS_EMBEDS = 1 << 2;
 	private const SUPPRESS_NOTIFICATIONS = 1 << 12;
+	private const MAX_ATTACHMENTS = 10;
 
 	private ?string $content = null;
 	private ?string $username = null;
@@ -23,6 +24,10 @@ final class Payload implements JsonSerializable
 	private ?bool $tts = null;
 	/** @var list<RichEmbed> */
 	private array $embeds = [];
+	/** @var list<Attachment> */
+	private array $attachments = [];
+	/** @var ?list<Snowflake> Existing attachments an edit keeps; null when the edit doesn't say. */
+	private ?array $keptAttachments = null;
 	private ?AllowedMentions $allowedMentions = null;
 	private ?bool $suppressEmbeds = null;
 	private ?bool $suppressNotifications = null;
@@ -107,6 +112,49 @@ final class Payload implements JsonSerializable
 	}
 
 	/**
+	 * Upload a file with the message, up to 10. Reference it from an embed or component with $attachment->url().
+	 *
+	 * When editing, new files are added alongside the message's existing ones. To remove existing files, say which
+	 * to keep with keepAttachments(), or clear(PayloadField::Attachments) to remove them all.
+	 *
+	 * @throws InvalidArgumentException When this would be the 11th file.
+	 */
+	public function addAttachment(Attachment $attachment): self
+	{
+		if (count($this->attachments) >= self::MAX_ATTACHMENTS) {
+			throw new InvalidArgumentException('Discord allows at most ' . self::MAX_ATTACHMENTS . ' files per message.');
+		}
+
+		$this->attachments[] = $attachment;
+		return $this;
+	}
+
+	/**
+	 * When editing, keep only these of the message's existing attachments; the rest are removed.
+	 *
+	 * Editing through a Message keeps all of its attachments by default, so this is only needed to remove some, or
+	 * to describe new files when editing by ID.
+	 *
+	 * @throws InvalidArgumentException When an ID isn't valid.
+	 */
+	public function keepAttachments(Snowflake|string ...$ids): self
+	{
+		$this->keptAttachments = array_values(array_map(Snowflake::from(...), $ids));
+		return $this;
+	}
+
+	/**
+	 * The files to upload with this payload.
+	 *
+	 * @internal
+	 * @return list<Attachment>
+	 */
+	public function files(): array
+	{
+		return $this->attachments;
+	}
+
+	/**
 	 * Remove these parts of the message when editing it. Without this, an edit leaves anything it doesn't set alone.
 	 *
 	 * Setting a field again afterwards takes it back off the list; clearing it after setting it discards what was
@@ -118,6 +166,7 @@ final class Payload implements JsonSerializable
 			match ($field) {
 				PayloadField::Content => $this->content = null,
 				PayloadField::Embeds => $this->embeds = [],
+				PayloadField::Attachments => $this->keptAttachments = [],
 			};
 			$this->cleared[$field->name] = $field;
 		}
@@ -208,18 +257,22 @@ final class Payload implements JsonSerializable
 		if ($this->cleared !== []) {
 			throw new InvalidArgumentException('clear() only applies when editing a message; a new message has nothing to clear.');
 		}
+		if ($this->keptAttachments !== null) {
+			throw new InvalidArgumentException('keepAttachments() only applies when editing a message.');
+		}
 
-		return $this->jsonSerialize();
+		return $this->jsonSerialize() + $this->attachmentList([]);
 	}
 
 	/**
 	 * The body for editing an existing message with this payload.
 	 *
 	 * @internal
+	 * @param ?list<Snowflake> $existing The message's current attachments, when the caller knows them.
 	 * @return array<string, mixed>
 	 * @throws InvalidArgumentException When the payload sets something Discord can't change after sending.
 	 */
-	public function toEditBody(): array
+	public function toEditBody(?array $existing = null): array
 	{
 		foreach (['username' => $this->username, 'avatar' => $this->avatar] as $field => $value) {
 			if ($value !== null && $value !== '') {
@@ -246,10 +299,40 @@ final class Payload implements JsonSerializable
 			match ($field) {
 				PayloadField::Content => $body['content'] = null,
 				PayloadField::Embeds => $body['embeds'] = [],
+				PayloadField::Attachments => null,
 			};
 		}
 
+		// Discord's attachments list on an edit is everything that should remain, so it's only sent when what to
+		// keep is known: said explicitly, or the message's own attachments when new files are being added.
+		$keep = $this->keptAttachments ?? ($this->attachments !== [] ? $existing : null);
+		if ($keep !== null) {
+			return $body + $this->attachmentList($keep);
+		}
+		foreach ($this->attachments as $attachment) {
+			if ($attachment->description !== null) {
+				throw new InvalidArgumentException(
+					'Describing a new file on an edit needs the full attachment list: edit through the Message, or say what to keep with keepAttachments().',
+				);
+			}
+		}
+
 		return $body;
+	}
+
+	/**
+	 * @param list<Snowflake> $keep
+	 * @return array{attachments?: list<array{id: string|int, filename?: string, description?: string}>}
+	 */
+	private function attachmentList(array $keep): array
+	{
+		$list = array_map(static fn(Snowflake $id): array => ['id' => $id->value], $keep);
+		foreach ($this->attachments as $index => $attachment) {
+			$list[] = ['id' => $index, 'filename' => $attachment->filename]
+				+ ($attachment->description === null ? [] : ['description' => $attachment->description]);
+		}
+
+		return $list === [] && $this->keptAttachments === null ? [] : ['attachments' => $list];
 	}
 
 	/**

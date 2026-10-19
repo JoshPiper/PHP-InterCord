@@ -1,0 +1,227 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Internet\InterCord\Tests;
+
+use Internet\InterCord\Attachment;
+use Internet\InterCord\Exception\InvalidArgumentException;
+use Internet\InterCord\Payload;
+use Internet\InterCord\PayloadField;
+use Internet\InterCord\RichEmbed;
+use Internet\InterCord\Tests\Support\FakeDiscord;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+
+final class AttachmentTest extends TestCase
+{
+	private const PIXEL = __DIR__ . '/Fixtures/pixel.png';
+	private const EXISTING_A = '1900000000000000009';
+	private const EXISTING_B = '1900000000000000010';
+
+	public function testUploadingFilesSendsMultipart(): void
+	{
+		$discord = new FakeDiscord(FakeDiscord::noContent());
+
+		$discord->webhook()->execute(
+			(new Payload())
+				->setContent('two files')
+				->addAttachment(Attachment::fromString('a,b' . "\n" . '1,2', 'report.csv', 'Weekly numbers'))
+				->addAttachment(Attachment::fromPath(self::PIXEL)),
+		);
+
+		$parts = $discord->parts();
+		self::assertSame(['payload_json', 'files[0]', 'files[1]'], array_keys($parts));
+		self::assertSame(
+			[
+				'content' => 'two files',
+				'attachments' => [
+					['id' => 0, 'filename' => 'report.csv', 'description' => 'Weekly numbers'],
+					['id' => 1, 'filename' => 'pixel.png'],
+				],
+			],
+			$discord->sentJson(),
+		);
+		self::assertSame('report.csv', $parts['files[0]']['filename']);
+		self::assertSame("a,b\n1,2", $parts['files[0]']['body']);
+		self::assertSame('pixel.png', $parts['files[1]']['filename']);
+		self::assertSame('image/png', $parts['files[1]']['type']);
+		self::assertSame((string) file_get_contents(self::PIXEL), $parts['files[1]']['body']);
+	}
+
+	public function testWithoutFilesTheRequestStaysJson(): void
+	{
+		$discord = new FakeDiscord(FakeDiscord::noContent());
+
+		$discord->webhook()->execute('hello');
+
+		self::assertSame('application/json', $discord->request()->getHeaderLine('Content-Type'));
+	}
+
+	public function testFilesAreSentAgainWhenRetried(): void
+	{
+		$discord = new FakeDiscord(FakeDiscord::json(429, ['retry_after' => 0]), FakeDiscord::noContent());
+
+		$discord->webhook()->execute((new Payload())->addAttachment(Attachment::fromPath(self::PIXEL)));
+
+		self::assertSame((string) file_get_contents(self::PIXEL), $discord->parts(1)['files[0]']['body']);
+	}
+
+	public function testEmbedsCanShowAnUploadedImage(): void
+	{
+		$image = Attachment::fromPath(self::PIXEL, 'chart.png');
+
+		self::assertSame('attachment://chart.png', $image->url());
+		self::assertSame(
+			['url' => 'attachment://chart.png'],
+			(new RichEmbed())->setImage($image->url())->jsonSerialize()['image'],
+		);
+	}
+
+	public function testSpoilersArePrefixed(): void
+	{
+		$attachment = Attachment::fromString('secret', 'plot.txt', spoiler: true);
+
+		self::assertSame('SPOILER_plot.txt', $attachment->filename);
+		self::assertSame('attachment://SPOILER_plot.txt', $attachment->url());
+	}
+
+	/**
+	 * @return iterable<string, array{string}>
+	 */
+	public static function badFilenames(): iterable
+	{
+		yield 'empty' => [''];
+		yield 'path' => ['../etc/passwd'];
+		yield 'backslash' => ['a\\b.txt'];
+		yield 'control character' => ["a\nb.txt"];
+		yield 'quote' => ['a"b.txt'];
+	}
+
+	#[DataProvider('badFilenames')]
+	public function testBadFilenamesAreRejected(string $filename): void
+	{
+		$this->expectException(InvalidArgumentException::class);
+		Attachment::fromString('x', $filename);
+	}
+
+	public function testAMissingFileIsRejectedUpFront(): void
+	{
+		$this->expectException(InvalidArgumentException::class);
+		Attachment::fromPath(__DIR__ . '/Fixtures/missing.png');
+	}
+
+	public function testAnOverlongDescriptionIsRejected(): void
+	{
+		$this->expectException(InvalidArgumentException::class);
+		Attachment::fromString('x', 'x.txt', str_repeat('a', 1025));
+	}
+
+	public function testMoreThanTenFilesAreRejected(): void
+	{
+		$payload = new Payload();
+		for ($i = 0; $i < 10; $i++) {
+			$payload->addAttachment(Attachment::fromString('x', "{$i}.txt"));
+		}
+
+		$this->expectException(InvalidArgumentException::class);
+		$payload->addAttachment(Attachment::fromString('x', '10.txt'));
+	}
+
+	public function testEditingByIdAppendsFilesWithoutTouchingExistingOnes(): void
+	{
+		$discord = new FakeDiscord(FakeDiscord::json(200, FakeDiscord::message()));
+
+		$discord->webhook()->editMessage(FakeDiscord::MESSAGE_ID, (new Payload())->addAttachment(Attachment::fromString('x', 'new.txt')));
+
+		// No attachments list: Discord appends the file and keeps what's there.
+		self::assertSame([], $discord->sentJson());
+		self::assertSame('new.txt', $discord->parts()['files[0]']['filename']);
+	}
+
+	public function testEditingByIdCannotDescribeNewFilesWithoutSayingWhatToKeep(): void
+	{
+		$discord = new FakeDiscord();
+
+		$this->expectException(InvalidArgumentException::class);
+		try {
+			$discord->webhook()->editMessage(FakeDiscord::MESSAGE_ID, (new Payload())->addAttachment(Attachment::fromString('x', 'new.txt', 'described')));
+		} finally {
+			self::assertSame(0, $discord->requestCount());
+		}
+	}
+
+	public function testKeepingNamedAttachments(): void
+	{
+		$discord = new FakeDiscord(FakeDiscord::json(200, FakeDiscord::message()));
+
+		$discord->webhook()->editMessage(
+			FakeDiscord::MESSAGE_ID,
+			(new Payload())->keepAttachments(self::EXISTING_A)->addAttachment(Attachment::fromString('x', 'new.txt', 'described')),
+		);
+
+		self::assertSame(
+			['attachments' => [['id' => self::EXISTING_A], ['id' => 0, 'filename' => 'new.txt', 'description' => 'described']]],
+			$discord->sentJson(),
+		);
+	}
+
+	public function testKeepingOnlySomeAttachmentsRemovesTheRest(): void
+	{
+		$discord = new FakeDiscord(FakeDiscord::json(200, FakeDiscord::message()));
+
+		$discord->webhook()->editMessage(FakeDiscord::MESSAGE_ID, (new Payload())->keepAttachments(self::EXISTING_B));
+
+		self::assertSame('application/json', $discord->request()->getHeaderLine('Content-Type'));
+		self::assertSame(['attachments' => [['id' => self::EXISTING_B]]], $discord->sentJson());
+	}
+
+	public function testClearingAttachmentsRemovesThemAll(): void
+	{
+		$discord = new FakeDiscord(FakeDiscord::json(200, FakeDiscord::message()));
+
+		$discord->webhook()->editMessage(FakeDiscord::MESSAGE_ID, (new Payload())->clear(PayloadField::Attachments));
+
+		self::assertSame(['attachments' => []], $discord->sentJson());
+	}
+
+	public function testEditingAMessageKeepsItsAttachmentsAutomatically(): void
+	{
+		$existing = [
+			['id' => self::EXISTING_A, 'filename' => 'a.png', 'size' => 1, 'url' => 'https://cdn.discordapp.com/a.png'],
+			['id' => self::EXISTING_B, 'filename' => 'b.png', 'size' => 1, 'url' => 'https://cdn.discordapp.com/b.png'],
+		];
+		$discord = new FakeDiscord(
+			FakeDiscord::json(200, FakeDiscord::message(['attachments' => $existing])),
+			FakeDiscord::json(200, FakeDiscord::message()),
+		);
+		$message = $discord->webhook()->getMessage(FakeDiscord::MESSAGE_ID);
+
+		$message->edit((new Payload())->addAttachment(Attachment::fromString('x', 'new.txt', 'described')));
+
+		self::assertSame(
+			['attachments' => [['id' => self::EXISTING_A], ['id' => self::EXISTING_B], ['id' => 0, 'filename' => 'new.txt', 'description' => 'described']]],
+			$discord->sentJson(1),
+		);
+	}
+
+	public function testAnExplicitKeepListOverridesTheMessagesAttachments(): void
+	{
+		$discord = new FakeDiscord(
+			FakeDiscord::json(200, FakeDiscord::message(['attachments' => [['id' => self::EXISTING_A, 'filename' => 'a.png']]])),
+			FakeDiscord::json(200, FakeDiscord::message()),
+		);
+
+		$discord->webhook()->getMessage(FakeDiscord::MESSAGE_ID)->edit((new Payload())->clear(PayloadField::Attachments));
+
+		self::assertSame(['attachments' => []], $discord->sentJson(1));
+	}
+
+	public function testANewMessageCannotKeepAttachments(): void
+	{
+		$discord = new FakeDiscord();
+
+		$this->expectException(InvalidArgumentException::class);
+		$discord->webhook()->execute((new Payload())->setContent('x')->keepAttachments(self::EXISTING_A));
+	}
+}

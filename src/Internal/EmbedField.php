@@ -23,7 +23,7 @@ final class EmbedField implements JsonSerializable
 	 */
 	public function jsonSerialize(): array
 	{
-		return array_filter([
+		return Json::withoutEmpty([
 			'name' => $this->name,
 			'value' => $this->value,
 			'inline' => $this->inline,

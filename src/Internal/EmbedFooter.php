@@ -22,7 +22,7 @@ final class EmbedFooter implements JsonSerializable
 	 */
 	public function jsonSerialize(): array
 	{
-		return array_filter([
+		return Json::withoutEmpty([
 			'text' => $this->text,
 			'icon_url' => $this->iconUrl,
 		]);

@@ -23,6 +23,6 @@ final class EmbedImage implements JsonSerializable
 	 */
 	public function jsonSerialize(): array
 	{
-		return array_filter(['url' => $this->url]);
+		return Json::withoutEmpty(['url' => $this->url]);
 	}
 }

@@ -13,6 +13,7 @@ use Internet\InterCord\Internal\EmbedAuthor;
 use Internet\InterCord\Internal\EmbedField;
 use Internet\InterCord\Internal\EmbedFooter;
 use Internet\InterCord\Internal\EmbedImage;
+use Internet\InterCord\Internal\Json;
 use JsonSerializable;
 
 /**
@@ -164,13 +165,16 @@ final class RichEmbed implements JsonSerializable
 	 */
 	public function jsonSerialize(): array
 	{
-		return array_filter([
+		// Discord reads 0 as "no colour", so black is left out rather than sent.
+		$color = $this->color?->jsonSerialize();
+
+		return Json::withoutEmpty([
 			'title' => $this->title,
 			'type' => 'rich',
 			'description' => $this->description,
 			'url' => $this->url,
 			'timestamp' => $this->timestamp?->format(DATE_ATOM),
-			'color' => $this->color?->jsonSerialize(),
+			'color' => $color === 0 ? null : $color,
 			'footer' => $this->footer?->jsonSerialize(),
 			'image' => $this->image?->jsonSerialize(),
 			'thumbnail' => $this->thumbnail?->jsonSerialize(),

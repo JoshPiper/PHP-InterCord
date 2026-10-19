@@ -97,7 +97,7 @@ final class Payload implements JsonSerializable
 	 */
 	public function jsonSerialize(): array
 	{
-		return array_filter([
+		return Json::withoutEmpty([
 			'content' => $this->content,
 			'username' => $this->username,
 			'avatar_url' => $this->avatar,

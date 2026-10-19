@@ -31,6 +31,23 @@ final class RichEmbedTest extends TestCase
 		);
 	}
 
+	public function testZeroIsKeptAsText(): void
+	{
+		$data = (new RichEmbed())
+			->setTitle('0')
+			->setDescription('0')
+			->setAuthor('0')
+			->setFooter('0')
+			->addField('0', '0')
+			->jsonSerialize();
+
+		self::assertSame('0', $data['title']);
+		self::assertSame('0', $data['description']);
+		self::assertSame(['name' => '0'], $data['author']);
+		self::assertSame(['text' => '0'], $data['footer']);
+		self::assertSame([['name' => '0', 'value' => '0']], $data['fields']);
+	}
+
 	public function testAuthor(): void
 	{
 		$embed = (new RichEmbed())->setAuthor('name', 'https://example.com', 'https://example.com/icon.png');

@@ -11,6 +11,9 @@ use Internet\InterCord\Exception\UnexpectedResponseException;
 /**
  * A message as Discord returned it.
  *
+ * $threadId is the thread the message lives in, when it was sent to or fetched from one; Webhook's message methods
+ * use it automatically when given this Message.
+ *
  * Embeds and attachments are left as Discord sent them, including the fields only Discord fills in, such as
  * proxy URLs and image dimensions. Anything not mapped to a property is in $raw.
  */
@@ -31,14 +34,16 @@ final class Message
 		public readonly DateTimeImmutable $timestamp,
 		public readonly ?DateTimeImmutable $editedTimestamp,
 		public readonly array $raw,
+		public readonly ?Snowflake $threadId,
 	) {}
 
 	/**
 	 * @internal
 	 * @param ?array<mixed> $data
+	 * @param ?Snowflake $threadId The thread the message was sent to or fetched from, to carry into later calls.
 	 * @throws UnexpectedResponseException
 	 */
-	public static function fromResponse(?array $data): self
+	public static function fromResponse(?array $data, ?Snowflake $threadId = null): self
 	{
 		if ($data === null) {
 			throw new UnexpectedResponseException('Discord returned no message body.');
@@ -55,6 +60,7 @@ final class Message
 			self::timestamp($data, 'timestamp'),
 			isset($data['edited_timestamp']) ? self::timestamp($data, 'edited_timestamp') : null,
 			$data,
+			$threadId,
 		);
 	}
 

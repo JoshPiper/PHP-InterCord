@@ -20,6 +20,7 @@ final class Payload implements JsonSerializable
 	private ?bool $tts = null;
 	/** @var list<RichEmbed> */
 	private array $embeds = [];
+	private ?AllowedMentions $allowedMentions = null;
 	private ?string $threadName = null;
 	/** @var list<Snowflake> */
 	private array $appliedTags = [];
@@ -93,6 +94,15 @@ final class Payload implements JsonSerializable
 	public function addEmbed(RichEmbed $embed): self
 	{
 		$this->embeds[] = $embed;
+		return $this;
+	}
+
+	/**
+	 * Limit which mentions in the content notify anyone. Discord's default, when this isn't set, is that all do.
+	 */
+	public function setAllowedMentions(AllowedMentions $allowedMentions): self
+	{
+		$this->allowedMentions = $allowedMentions;
 		return $this;
 	}
 
@@ -187,6 +197,7 @@ final class Payload implements JsonSerializable
 			'avatar_url' => $this->avatar,
 			'tts' => $this->tts,
 			'embeds' => array_map(static fn(RichEmbed $embed): array => $embed->jsonSerialize(), $this->embeds),
+			'allowed_mentions' => $this->allowedMentions?->jsonSerialize(),
 			'thread_name' => $this->threadName,
 			'applied_tags' => array_map(static fn(Snowflake $tag): string => $tag->value, $this->appliedTags),
 		]);

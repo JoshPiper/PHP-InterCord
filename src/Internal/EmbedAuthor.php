@@ -1,38 +1,37 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Internet\InterCord\Internal;
 
-/**
- * This class represents the author field for a rich embed.
- * Class EmbedAuthor
- * @package Internet\InterCord\Internal
- */
-class EmbedAuthor extends EmbedProvider {
-	private $icon_url;
-	private $proxy_icon_url;
+use JsonSerializable;
 
+/**
+ * @internal
+ */
+final class EmbedAuthor implements JsonSerializable
+{
 	/**
-	 * EmbedAuthor constructor.
 	 * @param string $name Author's name.
 	 * @param string $url Link for the author's name.
-	 * @param string $icon_url Author's icon.
-	 * @param string $proxy_icon_url -
+	 * @param string $iconUrl Author's icon.
 	 */
-	public function __construct(string $name = '', string $url = '', string $icon_url = '', string $proxy_icon_url = ''){
-		parent::__construct($name, $url);
-		$this->icon_url = $icon_url;
-		$this->proxy_icon_url = $proxy_icon_url;
+	public function __construct(
+		private readonly string $name = '',
+		private readonly string $url = '',
+		private readonly string $iconUrl = '',
+	) {
 	}
 
 	/**
-	 * Convert the object into an associative array.
-	 * @return array
+	 * @return array<string, string>
 	 */
-	public function jsonSerialize(): array{
-		$data = parent::jsonSerialize();
-		$data['icon_url'] = $this->icon_url;
-		$data['proxy_icon_url'] = $this->proxy_icon_url;
-		return array_filter($data);
+	public function jsonSerialize(): array
+	{
+		return array_filter([
+			'name' => $this->name,
+			'url' => $this->url,
+			'icon_url' => $this->iconUrl,
+		]);
 	}
 }

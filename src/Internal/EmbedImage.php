@@ -1,35 +1,28 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Internet\InterCord\Internal;
 
-/**
- * This class represents images within the rich embed structure (thumbnails and images)
- * Class EmbedImage
- * @package Internet\InterCord\Internal
- */
-class EmbedImage extends EmbedVideo {
-	private $proxy_url;
+use JsonSerializable;
 
-	/**
-	 * EmbedImage constructor.
-	 * @param string $url The image URL
-	 * @param string $proxy_url does not function.
-	 * @param int $height The height of the image.
-	 * @param int $width The width of the image.
-	 */
-	public function __construct(string $url = '', string $proxy_url = '', int $width = 0, int $height = 0){
-		parent::__construct($url, $width, $height);
-		$this->proxy_url = $proxy_url;
+/**
+ * An embed's image or thumbnail. Only the URL is settable; Discord fills in the proxy URL and dimensions itself.
+ *
+ * @internal
+ */
+final class EmbedImage implements JsonSerializable
+{
+	public function __construct(
+		private readonly string $url,
+	) {
 	}
 
 	/**
-	 * Convert the object into an associative array.
-	 * @return array
+	 * @return array<string, string>
 	 */
-	public function jsonSerialize(){
-		$data = parent::jsonSerialize();
-		$data['proxy_url'] = $this->proxy_url;
-		return array_filter($data);
+	public function jsonSerialize(): array
+	{
+		return array_filter(['url' => $this->url]);
 	}
 }

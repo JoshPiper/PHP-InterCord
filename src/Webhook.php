@@ -88,11 +88,20 @@ final class Webhook
 	 * @param array<int, string|int|float|RichEmbed>|string|int|float|RichEmbed|Payload $content
 	 * @param string $username Username override. Ignored when $content is a Payload.
 	 * @param string $avatar Avatar URL override. Ignored when $content is a Payload.
+	 * @param Snowflake|string|null $threadId Post into this thread of the webhook's channel instead of the channel.
 	 * @throws Exception\InterCordException
 	 */
-	public function execute(array|string|int|float|RichEmbed|Payload $content, string $username = '', string $avatar = ''): void
-	{
-		$this->transport->send('POST', body: Payload::from($content, $username, $avatar)->jsonSerialize());
+	public function execute(
+		array|string|int|float|RichEmbed|Payload $content,
+		string $username = '',
+		string $avatar = '',
+		Snowflake|string|null $threadId = null,
+	): void {
+		$this->transport->send(
+			'POST',
+			query: self::threadQuery(self::thread($threadId)),
+			body: Payload::from($content, $username, $avatar)->jsonSerialize(),
+		);
 	}
 
 	/**
@@ -101,48 +110,68 @@ final class Webhook
 	 * @param array<int, string|int|float|RichEmbed>|string|int|float|RichEmbed|Payload $content
 	 * @throws Exception\InterCordException
 	 */
-	public function executeAndWait(array|string|int|float|RichEmbed|Payload $content, string $username = '', string $avatar = ''): Message
-	{
+	public function executeAndWait(
+		array|string|int|float|RichEmbed|Payload $content,
+		string $username = '',
+		string $avatar = '',
+		Snowflake|string|null $threadId = null,
+	): Message {
+		$thread = self::thread($threadId);
+
 		return Message::fromResponse($this->transport->send(
 			'POST',
-			query: ['wait' => 'true'],
+			query: ['wait' => 'true'] + self::threadQuery($thread),
 			body: Payload::from($content, $username, $avatar)->jsonSerialize(),
-		));
+		), $thread);
 	}
 
 	/**
 	 * Fetch a message this webhook sent.
 	 *
+	 * @param Snowflake|string|null $threadId The thread the message is in. Defaults to the thread of a given Message.
 	 * @throws Exception\InterCordException
 	 */
-	public function getMessage(Snowflake|string|Message $message): Message
+	public function getMessage(Snowflake|string|Message $message, Snowflake|string|null $threadId = null): Message
 	{
-		return Message::fromResponse($this->transport->send('GET', self::messagePath($message)));
+		$thread = self::thread($threadId, $message);
+
+		return Message::fromResponse(
+			$this->transport->send('GET', self::messagePath($message), self::threadQuery($thread)),
+			$thread,
+		);
 	}
 
 	/**
 	 * Edit a message this webhook sent. Only what $content sets is changed; everything else is left as it is.
 	 *
 	 * @param array<int, string|int|float|RichEmbed>|string|int|float|RichEmbed|Payload $content
+	 * @param Snowflake|string|null $threadId The thread the message is in. Defaults to the thread of a given Message.
 	 * @throws Exception\InterCordException
 	 */
-	public function editMessage(Snowflake|string|Message $message, array|string|int|float|RichEmbed|Payload $content): Message
-	{
+	public function editMessage(
+		Snowflake|string|Message $message,
+		array|string|int|float|RichEmbed|Payload $content,
+		Snowflake|string|null $threadId = null,
+	): Message {
+		$thread = self::thread($threadId, $message);
+
 		return Message::fromResponse($this->transport->send(
 			'PATCH',
 			self::messagePath($message),
-			body: Payload::from($content)->toEditBody(),
-		));
+			self::threadQuery($thread),
+			Payload::from($content)->toEditBody(),
+		), $thread);
 	}
 
 	/**
 	 * Delete a message this webhook sent.
 	 *
+	 * @param Snowflake|string|null $threadId The thread the message is in. Defaults to the thread of a given Message.
 	 * @throws Exception\InterCordException
 	 */
-	public function deleteMessage(Snowflake|string|Message $message): void
+	public function deleteMessage(Snowflake|string|Message $message, Snowflake|string|null $threadId = null): void
 	{
-		$this->transport->send('DELETE', self::messagePath($message));
+		$this->transport->send('DELETE', self::messagePath($message), self::threadQuery(self::thread($threadId, $message)));
 	}
 
 	/**
@@ -156,5 +185,25 @@ final class Webhook
 	private static function messagePath(Snowflake|string|Message $message): string
 	{
 		return '/messages/' . ($message instanceof Message ? $message->id : Snowflake::from($message));
+	}
+
+	/**
+	 * An explicit thread wins; otherwise a Message brings the thread it came from.
+	 */
+	private static function thread(Snowflake|string|null $threadId, Snowflake|string|Message|null $message = null): ?Snowflake
+	{
+		if ($threadId !== null) {
+			return Snowflake::from($threadId);
+		}
+
+		return $message instanceof Message ? $message->threadId : null;
+	}
+
+	/**
+	 * @return array<string, string>
+	 */
+	private static function threadQuery(?Snowflake $thread): array
+	{
+		return $thread === null ? [] : ['thread_id' => $thread->value];
 	}
 }

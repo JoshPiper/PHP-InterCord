@@ -31,18 +31,22 @@ final class Color implements JsonSerializable
 	}
 
 	/**
-	 * Create a colour from a hex triplet (#RRGGBB) or shorthand (#RGB).
+	 * Create a colour from a hex triplet (#RRGGBB) or shorthand (#RGB). The # is optional.
+	 *
+	 * @throws InvalidColorException
 	 */
 	public static function fromHex(string $code): self
 	{
-		$code = str_replace('#', '', $code);
-		$colors = array_map(static fn (string $part): int => (int) hexdec($part), str_split($code, intdiv(strlen($code), 3)));
-
-		if (strlen($code) === 3) {
-			$colors = array_map(static fn (int $color): int => $color + ($color * 16), $colors);
+		if (preg_match('/^#?([[:xdigit:]]{3}|[[:xdigit:]]{6})$/', $code, $matches) !== 1) {
+			throw new InvalidColorException("'{$code}' is not a hex colour; expected #RRGGBB or #RGB.");
 		}
 
-		return new self(...$colors);
+		$digits = $matches[1];
+		if (strlen($digits) === 3) {
+			$digits = $digits[0] . $digits[0] . $digits[1] . $digits[1] . $digits[2] . $digits[2];
+		}
+
+		return self::fromDecimal((int) hexdec($digits));
 	}
 
 	/**

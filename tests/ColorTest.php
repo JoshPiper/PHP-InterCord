@@ -73,6 +73,28 @@ final class ColorTest extends TestCase
 	}
 
 	/**
+	 * @return iterable<string, array{string}>
+	 */
+	public static function malformedHex(): iterable
+	{
+		yield 'empty' => [''];
+		yield 'just a hash' => ['#'];
+		yield 'two digits' => ['#00'];
+		yield 'four digits' => ['#0000'];
+		yield 'eight digits' => ['#00000000'];
+		yield 'not hex' => ['#GGG'];
+		yield 'a colour name' => ['red'];
+		yield 'two hashes' => ['##FFF'];
+	}
+
+	#[DataProvider('malformedHex')]
+	public function testMalformedHexIsRejected(string $colour): void
+	{
+		$this->expectException(InvalidColorException::class);
+		(new RichEmbed())->setColor($colour);
+	}
+
+	/**
 	 * @return iterable<string, array{int, int, int}>
 	 */
 	public static function outOfRangeChannels(): iterable

@@ -1,0 +1,149 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly run to catch dependency and PHP drift while the repo is quiet.
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # The newest supported PHP, used by every job that isn't the test matrix.
+  PHP_VERSION: "8.4"
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer update --no-interaction --no-progress
+
+      # No lock file in a library, so this audits what a fresh install resolves today.
+      - name: Audit dependencies
+        run: composer audit
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --no-interaction --no-progress
+
+      - name: Check coding style
+        run: composer lint
+
+  analyse:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --no-interaction --no-progress
+
+      - name: PHPStan
+        run: composer analyse -- --no-progress
+
+  test:
+    name: Tests (PHP ${{ matrix.php }}, ${{ matrix.dependencies }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ["8.3", "8.4", "8.5"]
+        dependencies: [lowest, highest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          # Only the cell whose report gets uploaded pays for coverage.
+          coverage: ${{ matrix.php == env.PHP_VERSION && matrix.dependencies == 'highest' && 'pcov' || 'none' }}
+
+      - name: Install dependencies
+        run: composer update --no-interaction --no-progress ${{ matrix.dependencies == 'lowest' && '--prefer-lowest --prefer-stable' || '' }}
+
+      - name: Run tests
+        if: ${{ !(matrix.php == env.PHP_VERSION && matrix.dependencies == 'highest') }}
+        run: composer test
+
+      - name: Run tests with coverage
+        if: ${{ matrix.php == env.PHP_VERSION && matrix.dependencies == 'highest' }}
+        run: composer test:coverage
+
+      - name: Keep coverage report
+        if: ${{ matrix.php == env.PHP_VERSION && matrix.dependencies == 'highest' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage.xml
+          if-no-files-found: error
+
+  # Separate from the tests, and not a required check, so a Codecov outage
+  # never blocks a merge.
+  coverage:
+    name: Coverage
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Codecov OIDC upload
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Fetch coverage report
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          files: coverage.xml
+          disable_search: true
+          fail_ci_if_error: true
+          # OIDC needs no stored secret. If a CODECOV_TOKEN secret is ever
+          # added, it's used instead.
+          use_oidc: ${{ secrets.CODECOV_TOKEN == '' }}
+          token: ${{ secrets.CODECOV_TOKEN }}

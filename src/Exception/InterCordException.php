@@ -9,6 +9,4 @@ use Throwable;
 /**
  * Implemented by every exception InterCord throws, so callers can catch the library's failures in one place.
  */
-interface InterCordException extends Throwable
-{
-}
+interface InterCordException extends Throwable {}

@@ -102,7 +102,7 @@ final class Payload implements JsonSerializable
 			'username' => $this->username,
 			'avatar_url' => $this->avatar,
 			'tts' => $this->tts,
-			'embeds' => array_map(static fn (RichEmbed $embed): array => $embed->jsonSerialize(), $this->embeds),
+			'embeds' => array_map(static fn(RichEmbed $embed): array => $embed->jsonSerialize(), $this->embeds),
 		]);
 	}
 }

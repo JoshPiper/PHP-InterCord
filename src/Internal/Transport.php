@@ -39,8 +39,7 @@ final class Transport
 		#[\SensitiveParameter]
 		private readonly string $token,
 		private readonly int $maxRetries,
-	) {
-	}
+	) {}
 
 	/**
 	 * @param string $path Appended after the token, e.g. '/messages/123'.

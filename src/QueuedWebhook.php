@@ -20,8 +20,7 @@ final class QueuedWebhook implements Countable
 
 	public function __construct(
 		private readonly Webhook $webhook,
-	) {
-	}
+	) {}
 
 	/**
 	 * Add a payload to the back of the queue.
@@ -68,7 +67,7 @@ final class QueuedWebhook implements Countable
 			$payload = array_shift($this->queue);
 			try {
 				$this->webhook->execute($payload);
-			} catch (RateLimitedException | TransportException $ex) {
+			} catch (RateLimitedException|TransportException $ex) {
 				array_unshift($this->queue, $payload);
 				throw $ex;
 			}

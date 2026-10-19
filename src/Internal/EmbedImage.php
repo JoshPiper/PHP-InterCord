@@ -15,8 +15,7 @@ final class EmbedImage implements JsonSerializable
 {
 	public function __construct(
 		private readonly string $url,
-	) {
-	}
+	) {}
 
 	/**
 	 * @return array<string, string>

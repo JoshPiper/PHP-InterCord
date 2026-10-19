@@ -20,6 +20,6 @@ final class Json
 	 */
 	public static function withoutEmpty(array $data): array
 	{
-		return array_filter($data, static fn (mixed $value): bool => $value !== null && $value !== '' && $value !== false && $value !== []);
+		return array_filter($data, static fn(mixed $value): bool => $value !== null && $value !== '' && $value !== false && $value !== []);
 	}
 }

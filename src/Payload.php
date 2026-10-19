@@ -17,6 +17,7 @@ final class Payload implements JsonSerializable
 {
 	private const SUPPRESS_EMBEDS = 1 << 2;
 	private const SUPPRESS_NOTIFICATIONS = 1 << 12;
+	private const IS_COMPONENTS_V2 = 1 << 15;
 	private const MAX_ATTACHMENTS = 10;
 	private const MAX_COMPONENTS = 40;
 	private const MAX_ACTION_ROWS = 5;
@@ -290,6 +291,11 @@ final class Payload implements JsonSerializable
 			throw new InvalidArgumentException('keepAttachments() only applies when editing a message.');
 		}
 		$this->checkComponents();
+		if ($this->isComponentsV2() && (($this->content ?? '') !== '' || $this->embeds !== [])) {
+			throw new InvalidArgumentException(
+				'A message with Components V2 components (text displays, sections, containers and the like) can only hold components; use a TextDisplay instead of content or embeds.',
+			);
+		}
 
 		return $this->jsonSerialize() + $this->attachmentList([]);
 	}
@@ -323,7 +329,14 @@ final class Payload implements JsonSerializable
 		$body = $this->jsonSerialize();
 		// On an edit, an explicit false has to be sent so Discord turns link previews back on.
 		unset($body['flags']);
-		if ($this->suppressEmbeds !== null) {
+		if ($this->isComponentsV2()) {
+			if (($this->content ?? '') !== '' || $this->embeds !== []) {
+				throw new InvalidArgumentException('A message with Components V2 components can only hold components; use a TextDisplay instead of content or embeds.');
+			}
+			// Discord only switches an existing message to Components V2 once its content and embeds are gone.
+			$body = ['content' => null, 'embeds' => []] + $body;
+			$body['flags'] = self::IS_COMPONENTS_V2 | ($this->suppressEmbeds === true ? self::SUPPRESS_EMBEDS : 0);
+		} elseif ($this->suppressEmbeds !== null) {
 			$body['flags'] = $this->suppressEmbeds ? self::SUPPRESS_EMBEDS : 0;
 		}
 		foreach ($this->cleared as $field) {
@@ -361,9 +374,20 @@ final class Payload implements JsonSerializable
 		if ($total > self::MAX_COMPONENTS) {
 			throw new InvalidArgumentException('Discord allows at most ' . self::MAX_COMPONENTS . " components per message, counting nested ones; this has {$total}.");
 		}
-		if (count($this->components) > self::MAX_ACTION_ROWS) {
+		if (!$this->isComponentsV2() && count($this->components) > self::MAX_ACTION_ROWS) {
 			throw new InvalidArgumentException('Discord allows at most ' . self::MAX_ACTION_ROWS . ' rows of components per message.');
 		}
+	}
+
+	private function isComponentsV2(): bool
+	{
+		foreach ($this->components as $component) {
+			if ($component->requiresComponentsV2()) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -387,7 +411,8 @@ final class Payload implements JsonSerializable
 	public function jsonSerialize(): array
 	{
 		$flags = ($this->suppressEmbeds === true ? self::SUPPRESS_EMBEDS : 0)
-			| ($this->suppressNotifications === true ? self::SUPPRESS_NOTIFICATIONS : 0);
+			| ($this->suppressNotifications === true ? self::SUPPRESS_NOTIFICATIONS : 0)
+			| ($this->isComponentsV2() ? self::IS_COMPONENTS_V2 : 0);
 
 		return Json::withoutEmpty([
 			'content' => $this->content,

@@ -9,7 +9,7 @@ use Internet\InterCord\Exception\InvalidArgumentException;
 /**
  * A button that opens a URL. The one button any webhook can send, since clicking it needs no application to answer.
  */
-final class LinkButton implements ActionRowComponent
+final class LinkButton implements ActionRowComponent, SectionAccessory
 {
 	private const MAX_URL = 512;
 	private const MAX_LABEL = 80;

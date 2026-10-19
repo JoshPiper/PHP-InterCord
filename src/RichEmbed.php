@@ -99,14 +99,7 @@ final class RichEmbed implements JsonSerializable
 	 */
 	public function setColor(int|string|Color $color): self
 	{
-		if (is_numeric($color)) {
-			$this->color = Color::fromDecimal((int) $color);
-		} elseif (is_string($color)) {
-			$this->color = Color::fromHex($color);
-		} else {
-			$this->color = clone $color;
-		}
-
+		$this->color = Color::from($color);
 		return $this;
 	}
 

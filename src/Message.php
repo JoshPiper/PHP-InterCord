@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Internet\InterCord;
 
 use DateTimeImmutable;
+use Internet\InterCord\Exception\DetachedMessageException;
+use Internet\InterCord\Exception\InterCordException;
 use Internet\InterCord\Exception\InvalidArgumentException;
 use Internet\InterCord\Exception\UnexpectedResponseException;
 
@@ -16,6 +18,19 @@ use Internet\InterCord\Exception\UnexpectedResponseException;
  *
  * Embeds and attachments are left as Discord sent them, including the fields only Discord fills in, such as
  * proxy URLs and image dimensions. Anything not mapped to a property is in $raw.
+ *
+ * @phpstan-type SerialisedMessage array{
+ *     id: Snowflake,
+ *     channelId: Snowflake,
+ *     webhookId: ?Snowflake,
+ *     content: string,
+ *     embeds: list<array<string, mixed>>,
+ *     attachments: list<array<string, mixed>>,
+ *     timestamp: DateTimeImmutable,
+ *     editedTimestamp: ?DateTimeImmutable,
+ *     raw: array<string, mixed>,
+ *     threadId: ?Snowflake,
+ * }
  */
 final class Message
 {
@@ -35,15 +50,17 @@ final class Message
 		public readonly ?DateTimeImmutable $editedTimestamp,
 		public readonly array $raw,
 		public readonly ?Snowflake $threadId,
+		private readonly ?Webhook $webhook,
 	) {}
 
 	/**
 	 * @internal
 	 * @param ?array<mixed> $data
 	 * @param ?Snowflake $threadId The thread the message was sent to or fetched from, to carry into later calls.
+	 * @param ?Webhook $webhook The webhook that sent it, for edit() and delete().
 	 * @throws UnexpectedResponseException
 	 */
-	public static function fromResponse(?array $data, ?Snowflake $threadId = null): self
+	public static function fromResponse(?array $data, ?Snowflake $threadId = null, ?Webhook $webhook = null): self
 	{
 		if ($data === null) {
 			throw new UnexpectedResponseException('Discord returned no message body.');
@@ -61,6 +78,86 @@ final class Message
 			isset($data['edited_timestamp']) ? self::timestamp($data, 'edited_timestamp') : null,
 			$data,
 			$threadId,
+			$webhook,
+		);
+	}
+
+	/**
+	 * Edit this message, in its thread if it has one. Returns the edited message; this one is left unchanged.
+	 *
+	 * @param array<int, string|int|float|RichEmbed>|string|int|float|RichEmbed|Payload $content
+	 * @throws InterCordException
+	 * @see Webhook::editMessage()
+	 */
+	public function edit(array|string|int|float|RichEmbed|Payload $content): self
+	{
+		return $this->webhook()->editMessage($this, $content);
+	}
+
+	/**
+	 * Delete this message, in its thread if it has one.
+	 *
+	 * @throws InterCordException
+	 * @see Webhook::deleteMessage()
+	 */
+	public function delete(): void
+	{
+		$this->webhook()->deleteMessage($this);
+	}
+
+	/**
+	 * Leaves the webhook out, so the token never reaches debug output.
+	 *
+	 * @return SerialisedMessage
+	 */
+	public function __debugInfo(): array
+	{
+		return $this->__serialize();
+	}
+
+	/**
+	 * Leaves the webhook out, so a message stored in a cache or job queue never carries the token with it.
+	 *
+	 * @return SerialisedMessage
+	 */
+	public function __serialize(): array
+	{
+		return [
+			'id' => $this->id,
+			'channelId' => $this->channelId,
+			'webhookId' => $this->webhookId,
+			'content' => $this->content,
+			'embeds' => $this->embeds,
+			'attachments' => $this->attachments,
+			'timestamp' => $this->timestamp,
+			'editedTimestamp' => $this->editedTimestamp,
+			'raw' => $this->raw,
+			'threadId' => $this->threadId,
+		];
+	}
+
+	/**
+	 * @param SerialisedMessage $data
+	 */
+	public function __unserialize(array $data): void
+	{
+		$this->id = $data['id'];
+		$this->channelId = $data['channelId'];
+		$this->webhookId = $data['webhookId'];
+		$this->content = $data['content'];
+		$this->embeds = $data['embeds'];
+		$this->attachments = $data['attachments'];
+		$this->timestamp = $data['timestamp'];
+		$this->editedTimestamp = $data['editedTimestamp'];
+		$this->raw = $data['raw'];
+		$this->threadId = $data['threadId'];
+		$this->webhook = null;
+	}
+
+	private function webhook(): Webhook
+	{
+		return $this->webhook ?? throw new DetachedMessageException(
+			'This message was restored from serialised data and has no webhook; use Webhook::editMessage() or Webhook::deleteMessage() with its ID.',
 		);
 	}
 

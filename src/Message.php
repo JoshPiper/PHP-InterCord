@@ -83,6 +83,28 @@ final class Message
 	}
 
 	/**
+	 * A copy of this message that knows the thread it lives in.
+	 *
+	 * @internal
+	 */
+	public function inThread(Snowflake $threadId): self
+	{
+		return new self(
+			$this->id,
+			$this->channelId,
+			$this->webhookId,
+			$this->content,
+			$this->embeds,
+			$this->attachments,
+			$this->timestamp,
+			$this->editedTimestamp,
+			$this->raw,
+			$threadId,
+			$this->webhook,
+		);
+	}
+
+	/**
 	 * Edit this message, in its thread if it has one. Returns the edited message; this one is left unchanged.
 	 *
 	 * @param array<int, string|int|float|RichEmbed>|string|int|float|RichEmbed|Payload $content

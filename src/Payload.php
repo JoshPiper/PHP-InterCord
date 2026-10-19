@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Internet\InterCord;
 
+use Internet\InterCord\Component\TopLevelComponent;
 use Internet\InterCord\Exception\InvalidArgumentException;
 use Internet\InterCord\Internal\Json;
 use JsonSerializable;
@@ -17,6 +18,8 @@ final class Payload implements JsonSerializable
 	private const SUPPRESS_EMBEDS = 1 << 2;
 	private const SUPPRESS_NOTIFICATIONS = 1 << 12;
 	private const MAX_ATTACHMENTS = 10;
+	private const MAX_COMPONENTS = 40;
+	private const MAX_ACTION_ROWS = 5;
 
 	private ?string $content = null;
 	private ?string $username = null;
@@ -24,6 +27,8 @@ final class Payload implements JsonSerializable
 	private ?bool $tts = null;
 	/** @var list<RichEmbed> */
 	private array $embeds = [];
+	/** @var list<TopLevelComponent> */
+	private array $components = [];
 	/** @var list<Attachment> */
 	private array $attachments = [];
 	/** @var ?list<Snowflake> Existing attachments an edit keeps; null when the edit doesn't say. */
@@ -112,6 +117,29 @@ final class Payload implements JsonSerializable
 	}
 
 	/**
+	 * Add a component, such as an ActionRow of LinkButtons.
+	 *
+	 * A webhook that no application owns can only send components that need nobody to answer them: link buttons
+	 * and display components. RawComponent sends anything else, for webhooks an application owns.
+	 */
+	public function addComponent(TopLevelComponent $component): self
+	{
+		$this->components[] = $component;
+		unset($this->cleared[PayloadField::Components->name]);
+		return $this;
+	}
+
+	/**
+	 * Whether Discord has to be told to read this payload's components.
+	 *
+	 * @internal
+	 */
+	public function hasComponents(): bool
+	{
+		return $this->components !== [];
+	}
+
+	/**
 	 * Upload a file with the message, up to 10. Reference it from an embed or component with $attachment->url().
 	 *
 	 * When editing, new files are added alongside the message's existing ones. To remove existing files, say which
@@ -166,6 +194,7 @@ final class Payload implements JsonSerializable
 			match ($field) {
 				PayloadField::Content => $this->content = null,
 				PayloadField::Embeds => $this->embeds = [],
+				PayloadField::Components => $this->components = [],
 				PayloadField::Attachments => $this->keptAttachments = [],
 			};
 			$this->cleared[$field->name] = $field;
@@ -260,6 +289,7 @@ final class Payload implements JsonSerializable
 		if ($this->keptAttachments !== null) {
 			throw new InvalidArgumentException('keepAttachments() only applies when editing a message.');
 		}
+		$this->checkComponents();
 
 		return $this->jsonSerialize() + $this->attachmentList([]);
 	}
@@ -288,6 +318,7 @@ final class Payload implements JsonSerializable
 		if ($this->suppressNotifications !== null) {
 			throw new InvalidArgumentException('Notifications can only be suppressed when the message is first sent.');
 		}
+		$this->checkComponents();
 
 		$body = $this->jsonSerialize();
 		// On an edit, an explicit false has to be sent so Discord turns link previews back on.
@@ -299,6 +330,7 @@ final class Payload implements JsonSerializable
 			match ($field) {
 				PayloadField::Content => $body['content'] = null,
 				PayloadField::Embeds => $body['embeds'] = [],
+				PayloadField::Components => $body['components'] = [],
 				PayloadField::Attachments => null,
 			};
 		}
@@ -318,6 +350,20 @@ final class Payload implements JsonSerializable
 		}
 
 		return $body;
+	}
+
+	/**
+	 * @throws InvalidArgumentException When the components break Discord's limits.
+	 */
+	private function checkComponents(): void
+	{
+		$total = array_sum(array_map(static fn(TopLevelComponent $component): int => $component->componentCount(), $this->components));
+		if ($total > self::MAX_COMPONENTS) {
+			throw new InvalidArgumentException('Discord allows at most ' . self::MAX_COMPONENTS . " components per message, counting nested ones; this has {$total}.");
+		}
+		if (count($this->components) > self::MAX_ACTION_ROWS) {
+			throw new InvalidArgumentException('Discord allows at most ' . self::MAX_ACTION_ROWS . ' rows of components per message.');
+		}
 	}
 
 	/**
@@ -349,6 +395,7 @@ final class Payload implements JsonSerializable
 			'avatar_url' => $this->avatar,
 			'tts' => $this->tts,
 			'embeds' => array_map(static fn(RichEmbed $embed): array => $embed->jsonSerialize(), $this->embeds),
+			'components' => array_map(static fn(TopLevelComponent $component): array => $component->jsonSerialize(), $this->components),
 			'allowed_mentions' => $this->allowedMentions?->jsonSerialize(),
 			'flags' => $flags === 0 ? null : $flags,
 			'thread_name' => $this->threadName,

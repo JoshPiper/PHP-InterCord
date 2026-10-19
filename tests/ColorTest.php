@@ -2,98 +2,55 @@
 
 declare(strict_types=1);
 
+namespace Internet\InterCord\Tests;
 
-use PHPUnit\Framework\TestCase;
-use Internet\InterCord\RichEmbed;
 use Internet\InterCord\Internal\Color;
+use Internet\InterCord\RichEmbed;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 
-class ColorTest extends TestCase {
-	/** Data provider for colours, and their corresponding decimal colour.
-	 * @return array
+final class ColorTest extends TestCase
+{
+	/**
+	 * @return iterable<string, array{int|string|Color, int}>
 	 */
-	public function colours(){
-		return [
-			[16777215, 16777215], // White
-			[16711680, 16711680], // Red
-			[65280, 65280], // Green
-			[255, 255], // Blue
-			['16777215', 16777215],
-			['16711680', 16711680],
-			['65280', 65280],
-			['255', 255],
-			['#FFF', 16777215],
-			['#F00', 16711680],
-			['#0F0', 65280],
-			['#00F', 255],
-			['#FFFFFF', 16777215],
-			['#FF0000', 16711680],
-			['#00FF00', 65280],
-			['#0000FF', 255],
-			[new Color(255, 255, 255), 16777215],
-			[new Color(255, 0, 0), 16711680],
-			[new Color(0, 255, 0), 65280],
-			[new Color(0, 0, 255), 255],
-		];
+	public static function colours(): iterable
+	{
+		foreach (['white' => [16777215, 'FFFFFF', 'FFF', [255, 255, 255]], 'red' => [16711680, 'FF0000', 'F00', [255, 0, 0]], 'green' => [65280, '00FF00', '0F0', [0, 255, 0]], 'blue' => [255, '0000FF', '00F', [0, 0, 255]], 'mixed' => [0x1A2B3C, '1a2b3c', null, [0x1A, 0x2B, 0x3C]]] as $name => [$decimal, $hex, $short, $rgb]) {
+			yield "{$name} as int" => [$decimal, $decimal];
+			yield "{$name} as numeric string" => [(string) $decimal, $decimal];
+			yield "{$name} as hex" => ["#{$hex}", $decimal];
+			yield "{$name} as hex without #" => [$hex, $decimal];
+			if ($short !== null) {
+				yield "{$name} as short hex" => ["#{$short}", $decimal];
+			}
+			yield "{$name} as Color" => [new Color(...$rgb), $decimal];
+		}
 	}
 
-	/** Data provider for "empty" colours (which resolve to 0).
-	 * @return array
-	 */
-	public function emptyColors(){
-		return [
-			[0],
-			['0'],
-			['#000'],
-			['#000000'],
-			[new Color(0, 0, 0)]
-		];
-	}
-
-	/** Data provider for "bad" colours (which resolve should cause errors).
-	 * @return array
-	 */
-	public function badColors(){
-		return [
-			[16777216], // Above the largest value.
-			[-1], // Below 0.
-			['#00'], // Not a hex triplet.
-			['#00000000'] // Not a hex triplet either.
-		];
+	#[DataProvider('colours')]
+	public function testColours(int|string|Color $colour, int $expected): void
+	{
+		self::assertSame($expected, (new RichEmbed())->setColor($colour)->jsonSerialize()['color']);
 	}
 
 	/**
-	 * @dataProvider colours
-	 * @param int|string|Color $color
-	 * @param int $expected
+	 * Discord treats 0 as "no colour", so black is left out.
+	 *
+	 * @return iterable<string, array{int|string|Color}>
 	 */
-	public function testColorsWork($color, $expected){
-		$embed = new RichEmbed();
-		$embed->setColor($color);
-
-		$data = $embed->jsonSerialize();
-		$this->assertArrayHasKey('color', $data);
-		$this->assertEquals($expected, $data['color']);
+	public static function black(): iterable
+	{
+		yield 'int' => [0];
+		yield 'numeric string' => ['0'];
+		yield 'short hex' => ['#000'];
+		yield 'hex' => ['#000000'];
+		yield 'Color' => [new Color(0, 0, 0)];
 	}
 
-	/**
-	 * @dataProvider emptyColors
-	 * @param int|string|Color $color
-	 */
-	public function testEmptyColoursAreEmpty($color){
-		$embed = new RichEmbed();
-		$embed->setColor($color);
-
-		$data = $embed->jsonSerialize();
-		$this->assertArrayNotHasKey('color', $data);
-	}
-
-	/**
-	 * @dataProvider badColors
-	 * @param int|string|Color $color
-	 */
-	public function testBadColoursThrowExceptions($color){
-		$this->expectException(Exception::class); // TODO: Change this to a proper exception class.
-		$embed = new RichEmbed();
-		$embed->setColor($color);
+	#[DataProvider('black')]
+	public function testBlackIsLeftOut(int|string|Color $colour): void
+	{
+		self::assertArrayNotHasKey('color', (new RichEmbed())->setColor($colour)->jsonSerialize());
 	}
 }

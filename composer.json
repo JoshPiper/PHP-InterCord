@@ -33,11 +33,20 @@
         "psr/http-message": "^1.1 || ^2.0"
     },
     "require-dev": {
-        "phpunit/phpunit": ">=7 <10"
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpstan/phpstan": "^2.3",
+        "phpstan/phpstan-phpunit": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.1",
+        "phpunit/phpunit": "^12.5"
     },
     "autoload": {
         "psr-4": {
             "Internet\\InterCord\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Internet\\InterCord\\Tests\\": "tests/"
         }
     },
     "config": {
@@ -49,10 +58,17 @@
         }
     },
     "scripts": {
-        "test": "phpunit --bootstrap vendor/autoload.php --colors=never --whitelist src/ --testdox-html test.html --coverage-clover=coverage.xml tests",
-        "pcov-polyfill": [
-            "@composer require --dev pcov/clobber",
-            "pcov clobber"
-        ]
+        "test": "phpunit",
+        "test:coverage": "phpunit --coverage-clover=coverage.xml",
+        "analyse": "phpstan analyse",
+        "lint": "php-cs-fixer check --diff",
+        "fix": "php-cs-fixer fix"
+    },
+    "scripts-descriptions": {
+        "test": "Run the test suite.",
+        "test:coverage": "Run the test suite and write a Clover coverage report.",
+        "analyse": "Run static analysis.",
+        "lint": "Check coding style without changing files.",
+        "fix": "Fix coding style in place."
     }
 }

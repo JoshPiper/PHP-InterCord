@@ -7,6 +7,7 @@ namespace Internet\InterCord;
 use Internet\InterCord\Component\TopLevelComponent;
 use Internet\InterCord\Exception\InvalidArgumentException;
 use Internet\InterCord\Internal\Json;
+use Internet\InterCord\Internal\KeptAttachment;
 use JsonSerializable;
 
 /**
@@ -32,7 +33,7 @@ final class Payload implements JsonSerializable
 	private array $components = [];
 	/** @var list<Attachment> */
 	private array $attachments = [];
-	/** @var ?list<Snowflake> Existing attachments an edit keeps; null when the edit doesn't say. */
+	/** @var ?list<KeptAttachment> Existing attachments an edit keeps; null when the edit doesn't say. */
 	private ?array $keptAttachments = null;
 	private ?AllowedMentions $allowedMentions = null;
 	private ?bool $suppressEmbeds = null;
@@ -168,7 +169,7 @@ final class Payload implements JsonSerializable
 	 */
 	public function keepAttachments(Snowflake|string ...$ids): self
 	{
-		$this->keptAttachments = array_values(array_map(Snowflake::from(...), $ids));
+		$this->keptAttachments = array_values(array_map(static fn(Snowflake|string $id): KeptAttachment => new KeptAttachment(Snowflake::from($id)), $ids));
 		return $this;
 	}
 
@@ -304,7 +305,7 @@ final class Payload implements JsonSerializable
 	 * The body for editing an existing message with this payload.
 	 *
 	 * @internal
-	 * @param ?list<Snowflake> $existing The message's current attachments, when the caller knows them.
+	 * @param ?list<KeptAttachment> $existing Every file the message holds, when the caller knows them.
 	 * @param bool $messageIsComponentsV2 Whether the message being edited already uses Components V2.
 	 * @return array<string, mixed>
 	 * @throws InvalidArgumentException When the payload sets something Discord can't change after sending.
@@ -394,12 +395,12 @@ final class Payload implements JsonSerializable
 	}
 
 	/**
-	 * @param list<Snowflake> $keep
+	 * @param list<KeptAttachment> $keep
 	 * @return array{attachments?: list<array{id: string|int, filename?: string, description?: string}>}
 	 */
 	private function attachmentList(array $keep): array
 	{
-		$list = array_map(static fn(Snowflake $id): array => ['id' => $id->value], $keep);
+		$list = array_map(static fn(KeptAttachment $kept): array => $kept->toArray(), $keep);
 		foreach ($this->attachments as $index => $attachment) {
 			$list[] = ['id' => $index, 'filename' => $attachment->filename]
 				+ ($attachment->description === null ? [] : ['description' => $attachment->description]);

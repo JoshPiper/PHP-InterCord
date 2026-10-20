@@ -305,10 +305,11 @@ final class Payload implements JsonSerializable
 	 *
 	 * @internal
 	 * @param ?list<Snowflake> $existing The message's current attachments, when the caller knows them.
+	 * @param bool $messageIsComponentsV2 Whether the message being edited already uses Components V2.
 	 * @return array<string, mixed>
 	 * @throws InvalidArgumentException When the payload sets something Discord can't change after sending.
 	 */
-	public function toEditBody(?array $existing = null): array
+	public function toEditBody(?array $existing = null, bool $messageIsComponentsV2 = false): array
 	{
 		foreach (['username' => $this->username, 'avatar' => $this->avatar] as $field => $value) {
 			if ($value !== null && $value !== '') {
@@ -337,7 +338,9 @@ final class Payload implements JsonSerializable
 			$body = ['content' => null, 'embeds' => []] + $body;
 			$body['flags'] = self::IS_COMPONENTS_V2 | ($this->suppressEmbeds === true ? self::SUPPRESS_EMBEDS : 0);
 		} elseif ($this->suppressEmbeds !== null) {
-			$body['flags'] = $this->suppressEmbeds ? self::SUPPRESS_EMBEDS : 0;
+			// Flags replace the message's flags, and Discord refuses any that drop Components V2 from a V2 message.
+			$body['flags'] = ($this->suppressEmbeds ? self::SUPPRESS_EMBEDS : 0)
+				| ($messageIsComponentsV2 ? self::IS_COMPONENTS_V2 : 0);
 		}
 		foreach ($this->cleared as $field) {
 			match ($field) {

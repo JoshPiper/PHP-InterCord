@@ -126,6 +126,41 @@ final class ComponentsV2Test extends TestCase
 		);
 	}
 
+	public function testAMessageKnowsWhetherItIsComponentsV2(): void
+	{
+		$discord = new FakeDiscord(
+			FakeDiscord::json(200, FakeDiscord::message(['flags' => self::IS_COMPONENTS_V2 | 4])),
+			FakeDiscord::json(200, FakeDiscord::message(['flags' => 4])),
+		);
+		$webhook = $discord->webhook();
+
+		self::assertTrue($webhook->getMessage(FakeDiscord::MESSAGE_ID)->isComponentsV2());
+		self::assertFalse($webhook->getMessage(FakeDiscord::MESSAGE_ID)->isComponentsV2());
+	}
+
+	public function testEditingAV2MessageKeepsItsFlagWhenOnlyFlagsChange(): void
+	{
+		// Live, Discord rejects flags without IS_COMPONENTS_V2 on a V2 message: MESSAGE_CANNOT_REMOVE_COMPONENTS_V2_FLAG.
+		$v2 = FakeDiscord::json(200, FakeDiscord::message(['content' => '', 'flags' => self::IS_COMPONENTS_V2]));
+		$discord = new FakeDiscord($v2, $v2, $v2);
+		$message = $discord->webhook()->getMessage(FakeDiscord::MESSAGE_ID);
+
+		$message->edit((new Payload())->suppressEmbeds());
+		$message->edit((new Payload())->suppressEmbeds(false));
+
+		self::assertSame(['flags' => self::IS_COMPONENTS_V2 | 4], $discord->body(1));
+		self::assertSame(['flags' => self::IS_COMPONENTS_V2], $discord->body(2));
+	}
+
+	public function testEditingAClassicMessageSendsOnlyItsOwnFlags(): void
+	{
+		$discord = new FakeDiscord(FakeDiscord::json(200, FakeDiscord::message()), FakeDiscord::json(200, FakeDiscord::message()));
+
+		$discord->webhook()->getMessage(FakeDiscord::MESSAGE_ID)->edit((new Payload())->suppressEmbeds());
+
+		self::assertSame(['flags' => 4], $discord->body(1));
+	}
+
 	public function testV2AllowsMoreThanFiveTopLevelComponents(): void
 	{
 		$payload = new Payload();

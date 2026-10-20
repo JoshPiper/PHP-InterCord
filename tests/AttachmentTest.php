@@ -200,7 +200,69 @@ final class AttachmentTest extends TestCase
 		$message->edit((new Payload())->addAttachment(Attachment::fromString('x', 'new.txt', 'described')));
 
 		self::assertSame(
-			['attachments' => [['id' => self::EXISTING_A], ['id' => self::EXISTING_B], ['id' => 0, 'filename' => 'new.txt', 'description' => 'described']]],
+			['attachments' => [
+				['id' => self::EXISTING_A, 'filename' => 'a.png'],
+				['id' => self::EXISTING_B, 'filename' => 'b.png'],
+				['id' => 0, 'filename' => 'new.txt', 'description' => 'described'],
+			]],
+			$discord->sentJson(1),
+		);
+	}
+
+	/**
+	 * Live, Discord leaves files an embed or component uses out of 'attachments', and an edit that doesn't list
+	 * them deletes them. A Message has to find them where Discord does put them.
+	 */
+	public function testAMessageFindsFilesUsedByEmbedsAndComponents(): void
+	{
+		$channel = FakeDiscord::CHANNEL_ID;
+		$discord = new FakeDiscord(FakeDiscord::json(200, FakeDiscord::message([
+			'attachments' => [['id' => self::EXISTING_A, 'filename' => 'data.csv']],
+			'embeds' => [[
+				'type' => 'rich',
+				'image' => ['url' => "https://cdn.discordapp.com/attachments/{$channel}/1900000000000000011/chart%20one.png?ex=1&is=2&hm=3", 'width' => 1, 'height' => 1],
+				'thumbnail' => ['url' => 'https://cdn.discordapp.com/attachments/1111111111111111111/1900000000000000012/elsewhere.png'],
+				'footer' => ['text' => 'f', 'icon_url' => "https://media.discordapp.net/attachments/{$channel}/1900000000000000013/icon.png"],
+			]],
+			'components' => [[
+				'type' => 17,
+				'components' => [
+					['type' => 13, 'file' => ['id' => '9', 'url' => "https://cdn.discordapp.com/attachments/{$channel}/1900000000000000014/report.csv", 'attachment_id' => '1900000000000000014']],
+					['type' => 12, 'items' => [['media' => ['url' => 'https://example.com/external.png']]]],
+				],
+			]],
+		])));
+
+		$message = $discord->webhook()->getMessage(FakeDiscord::MESSAGE_ID);
+
+		self::assertSame(
+			[self::EXISTING_A, '1900000000000000011', '1900000000000000013', '1900000000000000014'],
+			array_map(strval(...), $message->attachmentIds()),
+		);
+	}
+
+	public function testEditingThroughAMessageKeepsFilesUsedByEmbedsAndComponents(): void
+	{
+		$channel = FakeDiscord::CHANNEL_ID;
+		$discord = new FakeDiscord(
+			FakeDiscord::json(200, FakeDiscord::message([
+				'attachments' => [['id' => self::EXISTING_A, 'filename' => 'data.csv']],
+				'embeds' => [['type' => 'rich', 'image' => ['url' => "https://cdn.discordapp.com/attachments/{$channel}/1900000000000000011/chart%20one.png?ex=1"]]],
+				'components' => [['type' => 13, 'file' => ['url' => "https://cdn.discordapp.com/attachments/{$channel}/1900000000000000014/report.csv", 'attachment_id' => '1900000000000000014']]],
+			])),
+			FakeDiscord::json(200, FakeDiscord::message()),
+		);
+		$message = $discord->webhook()->getMessage(FakeDiscord::MESSAGE_ID);
+
+		$message->edit((new Payload())->addAttachment(Attachment::fromString('x', 'new.txt')));
+
+		self::assertSame(
+			['attachments' => [
+				['id' => self::EXISTING_A, 'filename' => 'data.csv'],
+				['id' => '1900000000000000011', 'filename' => 'chart one.png'],
+				['id' => '1900000000000000014', 'filename' => 'report.csv'],
+				['id' => 0, 'filename' => 'new.txt'],
+			]],
 			$discord->sentJson(1),
 		);
 	}

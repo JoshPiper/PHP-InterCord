@@ -170,7 +170,7 @@ final class Webhook
 	): Message {
 		$thread = self::thread($threadId, $message);
 		$payload = Payload::from($content);
-		$existing = $message instanceof Message ? $message->attachmentIds() : null;
+		$existing = $message instanceof Message ? $message->keptAttachments() : null;
 
 		return Message::fromResponse($this->transport->send(
 			'PATCH',

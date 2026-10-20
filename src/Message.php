@@ -9,6 +9,7 @@ use Internet\InterCord\Exception\DetachedMessageException;
 use Internet\InterCord\Exception\InterCordException;
 use Internet\InterCord\Exception\InvalidArgumentException;
 use Internet\InterCord\Exception\UnexpectedResponseException;
+use Internet\InterCord\Internal\KeptAttachment;
 
 /**
  * A message as Discord returned it.
@@ -95,20 +96,64 @@ final class Message
 	}
 
 	/**
-	 * The IDs of this message's attachments, in order.
+	 * The IDs of every file this message holds, including those an embed or component shows.
 	 *
 	 * @return list<Snowflake>
 	 */
 	public function attachmentIds(): array
 	{
-		$ids = [];
+		return array_map(static fn(KeptAttachment $kept): Snowflake => $kept->id, $this->keptAttachments());
+	}
+
+	/**
+	 * Every file this message holds, for an edit to keep.
+	 *
+	 * Discord leaves files that an embed or component shows out of 'attachments', and an edit that doesn't list them
+	 * deletes them. So they're found where Discord does put them: in the CDN URLs of embed images and icons (when the
+	 * URL is in this message's channel, so a link to some other message's file isn't mistaken for one of these), and
+	 * in components' attachment_id.
+	 *
+	 * @internal
+	 * @return list<KeptAttachment>
+	 */
+	public function keptAttachments(): array
+	{
+		$found = [];
+		$add = static function (mixed $id, mixed $filename) use (&$found): void {
+			if (is_string($id) && preg_match('/^[1-9][0-9]{0,19}$/', $id) === 1 && !isset($found[$id])) {
+				$found[$id] = new KeptAttachment(Snowflake::from($id), is_string($filename) && $filename !== '' ? $filename : null);
+			}
+		};
+
 		foreach ($this->attachments as $attachment) {
-			if (is_string($attachment['id'] ?? null)) {
-				$ids[] = Snowflake::from($attachment['id']);
+			$add($attachment['id'] ?? null, $attachment['filename'] ?? null);
+		}
+
+		$cdn = '~^https://(?:cdn\.discordapp\.com|media\.discordapp\.net)/attachments/' . $this->channelId->value . '/(\d+)/([^/?#]+)~';
+		foreach ($this->embeds as $embed) {
+			foreach ([['image', 'url'], ['thumbnail', 'url'], ['author', 'icon_url'], ['footer', 'icon_url']] as [$part, $key]) {
+				$url = is_array($embed[$part] ?? null) ? ($embed[$part][$key] ?? null) : null;
+				if (is_string($url) && preg_match($cdn, $url, $matches) === 1) {
+					$add($matches[1], rawurldecode($matches[2]));
+				}
 			}
 		}
 
-		return $ids;
+		$walk = static function (mixed $node) use (&$walk, $add): void {
+			if (!is_array($node)) {
+				return;
+			}
+			if (isset($node['attachment_id'])) {
+				$path = is_string($node['url'] ?? null) ? (string) parse_url($node['url'], PHP_URL_PATH) : '';
+				$add($node['attachment_id'], rawurldecode(basename($path)));
+			}
+			foreach ($node as $child) {
+				$walk($child);
+			}
+		};
+		$walk($this->raw['components'] ?? []);
+
+		return array_values($found);
 	}
 
 	/**

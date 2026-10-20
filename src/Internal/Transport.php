@@ -60,7 +60,7 @@ final class Transport
 		$json = null;
 		if ($body !== null) {
 			try {
-				$json = json_encode($body, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+				$json = json_encode($body === [] ? new \stdClass() : $body, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 			} catch (JsonException $ex) {
 				throw new InvalidArgumentException('Payload could not be encoded as JSON: ' . $ex->getMessage(), 0, $ex);
 			}

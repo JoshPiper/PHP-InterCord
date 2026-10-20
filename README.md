@@ -167,12 +167,14 @@ $webhook->execute(
 
 Up to 10 files per message. `$attachment->url()` is the `attachment://` reference embeds and components use to show an uploaded file. Files from a path are read when the request is sent, so queued messages don't hold them in memory.
 
-When **editing**, Discord removes any existing attachment the edit doesn't list:
+When **editing**, Discord deletes every existing file that an upload doesn't list, including files that embeds and components show:
 
-- Editing **through a `Message`** keeps its existing files, and adds the new ones.
+- Editing **through a `Message`** keeps all of its files, including those embeds and components show, and adds the new ones.
 - `->keepAttachments($id, …)` keeps only those existing files.
-- `->clear(PayloadField::Attachments)` removes all existing files.
-- Editing **by ID** with none of the above adds the new files and leaves existing ones alone. In that case new files can't have descriptions, because Discord would silently drop them, so InterCord throws.
+- `->clear(PayloadField::Attachments)` removes all existing files; files added in the same edit replace them.
+- Editing **by ID** and uploading files without either of the above throws, since Discord would delete every existing file.
+
+Edits that don't upload anything leave a message's files alone.
 
 ## Components
 
@@ -234,6 +236,8 @@ $webhook->execute(
 ```
 
 InterCord sets the Components V2 flag for you. Content and embeds can't be combined with these components, so mixing them throws before anything is sent. Editing a message into Components V2 clears its content and embeds, which Discord requires. A message holds at most 40 components, counting nested ones.
+
+In a Components V2 message, uploaded files only appear where a `File`, `Thumbnail` or `MediaGallery` shows them; a file nothing references is accepted but not shown. Once a message uses Components V2, Discord won't let an edit turn it off: editing through the `Message` keeps the flag for you, while an edit by ID that changes flags (such as `suppressEmbeds()`) is rejected by Discord.
 
 ## Queues
 

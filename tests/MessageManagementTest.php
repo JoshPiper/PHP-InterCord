@@ -50,6 +50,16 @@ final class MessageManagementTest extends TestCase
 		self::assertSame(['embeds' => [['title' => 'new', 'type' => 'rich']]], $discord->body());
 	}
 
+	public function testAnEmptyEditIsSentAsAJsonObject(): void
+	{
+		$discord = new FakeDiscord(FakeDiscord::json(200, FakeDiscord::message()));
+
+		$discord->webhook()->editMessage(FakeDiscord::MESSAGE_ID, new Payload());
+
+		// Discord expects an object; an empty PHP array would otherwise encode as [].
+		self::assertSame('{}', (string) $discord->request()->getBody());
+	}
+
 	public function testDeleteMessage(): void
 	{
 		$discord = new FakeDiscord(FakeDiscord::noContent());

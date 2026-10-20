@@ -144,8 +144,9 @@ final class Payload implements JsonSerializable
 	/**
 	 * Upload a file with the message, up to 10. Reference it from an embed or component with $attachment->url().
 	 *
-	 * When editing, new files are added alongside the message's existing ones. To remove existing files, say which
-	 * to keep with keepAttachments(), or clear(PayloadField::Attachments) to remove them all.
+	 * When editing through a Message, its existing files are kept alongside the new ones. When editing by ID, say
+	 * what to keep with keepAttachments() or clear(PayloadField::Attachments): Discord deletes every existing file
+	 * an upload doesn't list, so an edit by ID that doesn't say is refused.
 	 *
 	 * @throws InvalidArgumentException When this would be the 11th file.
 	 */
@@ -162,8 +163,10 @@ final class Payload implements JsonSerializable
 	/**
 	 * When editing, keep only these of the message's existing attachments; the rest are removed.
 	 *
-	 * Editing through a Message keeps all of its attachments by default, so this is only needed to remove some, or
-	 * to describe new files when editing by ID.
+	 * Editing through a Message keeps all of its files by default, including those embeds and components show, so
+	 * this is only needed there to remove some. When editing by ID, it's needed to upload anything at all. Files kept
+	 * by bare ID can't be referenced as attachment://filename by components in the same edit; edit through the
+	 * Message for that.
 	 *
 	 * @throws InvalidArgumentException When an ID isn't valid.
 	 */
@@ -352,18 +355,17 @@ final class Payload implements JsonSerializable
 			};
 		}
 
-		// Discord's attachments list on an edit is everything that should remain, so it's only sent when what to
-		// keep is known: said explicitly, or the message's own attachments when new files are being added.
+		// Discord's attachments list on an edit is everything that should remain, and uploading without one deletes
+		// every existing file. So it's sent whenever what to keep is known: said explicitly, or the message's own
+		// files when new ones are being added.
 		$keep = $this->keptAttachments ?? ($this->attachments !== [] ? $existing : null);
 		if ($keep !== null) {
 			return $body + $this->attachmentList($keep);
 		}
-		foreach ($this->attachments as $attachment) {
-			if ($attachment->description !== null) {
-				throw new InvalidArgumentException(
-					'Describing a new file on an edit needs the full attachment list: edit through the Message, or say what to keep with keepAttachments().',
-				);
-			}
+		if ($this->attachments !== []) {
+			throw new InvalidArgumentException(
+				"Uploading files on an edit deletes the message's existing files unless they're listed: edit through the Message, or say what to keep with keepAttachments() or clear(PayloadField::Attachments).",
+			);
 		}
 
 		return $body;

@@ -128,27 +128,32 @@ final class AttachmentTest extends TestCase
 		$payload->addAttachment(Attachment::fromString('x', '10.txt'));
 	}
 
-	public function testEditingByIdAppendsFilesWithoutTouchingExistingOnes(): void
-	{
-		$discord = new FakeDiscord(FakeDiscord::json(200, FakeDiscord::message()));
-
-		$discord->webhook()->editMessage(FakeDiscord::MESSAGE_ID, (new Payload())->addAttachment(Attachment::fromString('x', 'new.txt')));
-
-		// No attachments list: Discord appends the file and keeps what's there.
-		self::assertSame([], $discord->sentJson());
-		self::assertSame('new.txt', $discord->parts()['files[0]']['filename']);
-	}
-
-	public function testEditingByIdCannotDescribeNewFilesWithoutSayingWhatToKeep(): void
+	/**
+	 * Live, an edit that uploads files without listing what to keep deletes every existing file, despite Discord's
+	 * documentation saying new files are appended.
+	 */
+	public function testUploadingByIdWithoutSayingWhatToKeepIsRefused(): void
 	{
 		$discord = new FakeDiscord();
 
 		$this->expectException(InvalidArgumentException::class);
 		try {
-			$discord->webhook()->editMessage(FakeDiscord::MESSAGE_ID, (new Payload())->addAttachment(Attachment::fromString('x', 'new.txt', 'described')));
+			$discord->webhook()->editMessage(FakeDiscord::MESSAGE_ID, (new Payload())->addAttachment(Attachment::fromString('x', 'new.txt')));
 		} finally {
 			self::assertSame(0, $discord->requestCount());
 		}
+	}
+
+	public function testUploadingByIdAfterClearingReplacesTheFiles(): void
+	{
+		$discord = new FakeDiscord(FakeDiscord::json(200, FakeDiscord::message()));
+
+		$discord->webhook()->editMessage(
+			FakeDiscord::MESSAGE_ID,
+			(new Payload())->clear(PayloadField::Attachments)->addAttachment(Attachment::fromString('x', 'new.txt')),
+		);
+
+		self::assertSame(['attachments' => [['id' => 0, 'filename' => 'new.txt']]], $discord->sentJson());
 	}
 
 	public function testKeepingNamedAttachments(): void

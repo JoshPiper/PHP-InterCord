@@ -155,7 +155,7 @@ final class Webhook
 	/**
 	 * Edit a message this webhook sent. Only what $content sets is changed; everything else is left as it is.
 	 *
-	 * Given a Message, new files are added alongside its existing attachments (see Payload::addAttachment()), and a
+	 * Given a Message, new files are added alongside its existing ones (see Payload::addAttachment()), and a
 	 * Components V2 message keeps its V2 flag. By ID, neither is known: an edit that changes flags on a V2 message
 	 * then needs to go through the Message.
 	 *

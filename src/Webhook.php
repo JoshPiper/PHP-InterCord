@@ -155,7 +155,9 @@ final class Webhook
 	/**
 	 * Edit a message this webhook sent. Only what $content sets is changed; everything else is left as it is.
 	 *
-	 * Given a Message, new files are added alongside its existing attachments; see Payload::addAttachment().
+	 * Given a Message, new files are added alongside its existing attachments (see Payload::addAttachment()), and a
+	 * Components V2 message keeps its V2 flag. By ID, neither is known: an edit that changes flags on a V2 message
+	 * then needs to go through the Message.
 	 *
 	 * @param array<int, string|int|float|RichEmbed>|string|int|float|RichEmbed|Payload $content
 	 * @param Snowflake|string|null $threadId The thread the message is in. Defaults to the thread of a given Message.
@@ -174,7 +176,7 @@ final class Webhook
 			'PATCH',
 			self::messagePath($message),
 			self::threadQuery($thread) + self::componentsQuery($payload),
-			$payload->toEditBody($existing),
+			$payload->toEditBody($existing, $message instanceof Message && $message->isComponentsV2()),
 			$payload->files(),
 		), $thread, $this);
 	}

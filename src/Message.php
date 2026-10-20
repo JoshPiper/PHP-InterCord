@@ -34,6 +34,8 @@ use Internet\InterCord\Exception\UnexpectedResponseException;
  */
 final class Message
 {
+	private const IS_COMPONENTS_V2 = 1 << 15;
+
 	/**
 	 * @param list<array<string, mixed>> $embeds
 	 * @param list<array<string, mixed>> $attachments
@@ -80,6 +82,16 @@ final class Message
 			$threadId,
 			$webhook,
 		);
+	}
+
+	/**
+	 * Whether this message uses Components V2. Once it does, Discord won't let an edit turn that off.
+	 */
+	public function isComponentsV2(): bool
+	{
+		$flags = $this->raw['flags'] ?? 0;
+
+		return is_int($flags) && ($flags & self::IS_COMPONENTS_V2) !== 0;
 	}
 
 	/**
